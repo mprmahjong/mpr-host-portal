@@ -20,585 +20,137 @@
       --font: 'Georgia', serif;
     }
 
-    body {
-      font-family: var(--font);
-      background: var(--green-light);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: var(--font); background: var(--green-light); color: var(--text); min-height: 100vh; }
 
-    /* ── CODE ENTRY SCREEN ───────────────────────────── */
+    /* CODE ENTRY */
     #screen-code {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-      background: var(--green-dark);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 24px; background: var(--green-dark);
     }
-
-    .code-logo {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 24px;
-    }
-
-    .code-title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: var(--gold);
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .code-sub {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 40px;
-      text-align: center;
-    }
-
-    .code-box {
-      background: white;
-      border-radius: 16px;
-      padding: 32px 28px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    }
-
-    .code-label {
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text-light);
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .code-input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      font-family: var(--font);
-      font-size: 1.1rem;
-      color: var(--text);
-      outline: none;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-align: center;
-      margin-bottom: 16px;
-      transition: border-color 0.2s;
-    }
-
+    .code-logo { width: 140px; height: 140px; margin-bottom: 24px; object-fit: contain; }
+    .code-title { font-size: 1.6rem; font-weight: bold; color: var(--gold); margin-bottom: 8px; text-align: center; }
+    .code-sub { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 40px; text-align: center; }
+    .code-box { background: white; border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .code-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; display: block; }
+    .code-input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 10px; font-family: var(--font); font-size: 1.6rem; color: var(--text); outline: none; letter-spacing: 6px; text-align: center; margin-bottom: 16px; transition: border-color 0.2s; }
     .code-input:focus { border-color: var(--green-dark); }
     .code-input.error { border-color: #B94040; }
-
-    .code-btn {
-      width: 100%;
-      padding: 15px;
-      background: var(--green-dark);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-family: var(--font);
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
+    .code-btn { width: 100%; padding: 15px; background: var(--green-dark); color: white; border: none; border-radius: 10px; font-family: var(--font); font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .code-btn:hover { background: var(--green-mid); }
     .code-btn:disabled { background: #aaa; cursor: not-allowed; }
-
-    .code-err {
-      font-size: 0.82rem;
-      color: #B94040;
-      text-align: center;
-      margin-top: 12px;
-      display: none;
-    }
+    .code-err { font-size: 0.82rem; color: #B94040; text-align: center; margin-top: 12px; display: none; }
     .code-err.show { display: block; }
 
-    /* ── MAIN APP ────────────────────────────────────── */
+    /* MAIN APP */
     #screen-app { display: none; flex-direction: column; min-height: 100vh; }
-
-    .app-header {
-      background: var(--green-dark);
-      padding: 20px 20px 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .app-header-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .app-event-name {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: var(--gold);
-      line-height: 1.3;
-      flex: 1;
-    }
-
-    .app-event-meta {
-      font-size: 0.78rem;
-      color: rgba(255,255,255,0.55);
-      margin-top: 4px;
-    }
-
-    .app-checkin-badge {
-      background: rgba(201,163,74,0.15);
-      border: 1px solid rgba(201,163,74,0.4);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 0.8rem;
-      color: var(--gold);
-      white-space: nowrap;
-      margin-left: 12px;
-      flex-shrink: 0;
-    }
-
-    .app-tabs {
-      display: flex;
-      gap: 0;
-    }
-
-    .app-tab {
-      flex: 1;
-      padding: 12px 8px;
-      text-align: center;
-      font-size: 0.78rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
-      user-select: none;
-    }
-
+    .app-header { background: var(--green-dark); padding: 20px 20px 0; position: sticky; top: 0; z-index: 100; }
+    .app-header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+    .app-event-name { font-size: 1.2rem; font-weight: bold; color: var(--gold); line-height: 1.3; flex: 1; }
+    .app-event-meta { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 4px; }
+    .app-checkin-badge { background: rgba(201,163,74,0.15); border: 1px solid rgba(201,163,74,0.4); border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; color: var(--gold); white-space: nowrap; margin-left: 12px; flex-shrink: 0; }
+    .app-tabs { display: flex; }
+    .app-tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 0.78rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; user-select: none; }
     .app-tab:hover { color: rgba(255,255,255,0.8); }
     .app-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-    .app-body {
-      flex: 1;
-      padding: 24px 16px 80px;
-    }
-
-    /* ── PANELS ──────────────────────────────────────── */
+    .app-body { flex: 1; padding: 24px 16px 80px; }
     .panel { display: none; }
     .panel.active { display: block; }
 
-    /* ── SEARCH BAR ──────────────────────────────────── */
-    .search-bar {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-family: var(--font);
-      font-size: 0.95rem;
-      color: var(--text);
-      background: white;
-      margin-bottom: 16px;
-      outline: none;
-    }
-
+    /* SEARCH */
+    .search-bar { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-family: var(--font); font-size: 0.95rem; color: var(--text); background: white; margin-bottom: 16px; outline: none; }
     .search-bar:focus { border-color: var(--green-mid); }
+    .section-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 12px; display: block; }
 
-    /* ── MEMBER LIST (CHECK IN) ──────────────────────── */
-    .section-label {
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text-light);
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .member-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .member-row {
-      background: white;
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      transition: opacity 0.2s;
-    }
-
-    .member-row.checked-in {
-      background: #eef7f3;
-      border-left: 4px solid var(--green-mid);
-    }
-
+    /* MEMBER LIST */
+    .member-list { display: flex; flex-direction: column; gap: 8px; }
+    .member-row { background: white; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .member-row.checked-in { background: #eef7f3; border-left: 4px solid var(--green-mid); }
     .member-info { flex: 1; }
-
-    .member-name {
-      font-size: 1rem;
-      font-weight: bold;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-
-    .member-mpr {
-      font-size: 0.78rem;
-      color: var(--text-light);
-    }
-
-    .checkin-btn {
-      padding: 8px 20px;
-      border-radius: 8px;
-      border: none;
-      font-family: var(--font);
-      font-size: 0.85rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.15s;
-      min-width: 90px;
-      text-align: center;
-    }
-
-    .checkin-btn.not-in {
-      background: var(--green-dark);
-      color: white;
-    }
-
+    .member-name { font-size: 1rem; font-weight: bold; color: var(--text); margin-bottom: 2px; }
+    .member-sub { font-size: 0.78rem; color: var(--text-light); }
+    .checkin-btn { padding: 8px 20px; border-radius: 8px; border: none; font-family: var(--font); font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.15s; min-width: 90px; text-align: center; }
+    .checkin-btn.not-in { background: var(--green-dark); color: white; }
     .checkin-btn.not-in:hover { background: var(--green-mid); }
+    .checkin-btn.is-in { background: #eef7f3; color: var(--green-mid); border: 1.5px solid var(--green-mid); }
+    .checkin-btn.is-in:hover { background: #fdf2f2; color: #B94040; border-color: #B94040; }
 
-    .checkin-btn.is-in {
-      background: #eef7f3;
-      color: var(--green-mid);
-      border: 1.5px solid var(--green-mid);
-      cursor: default;
-    }
-
-    /* ── PLAYERS LIST ────────────────────────────────── */
-    .player-chip {
-      background: white;
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      margin-bottom: 8px;
-    }
-
-    .player-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--green-dark);
-      color: white;
-      font-size: 0.8rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
+    /* PLAYERS */
+    .player-chip { background: white; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 8px; }
+    .player-num { width: 28px; height: 28px; border-radius: 50%; background: var(--green-dark); color: white; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .player-chip-name { font-size: 0.95rem; font-weight: bold; flex: 1; }
     .player-chip-mpr { font-size: 0.78rem; color: var(--text-light); }
 
-    /* ── RESULTS ─────────────────────────────────────── */
-    .result-form {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      margin-bottom: 20px;
-    }
-
-    .result-form-title {
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--green-mid);
-      margin-bottom: 16px;
-      font-weight: bold;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
+    /* RESULTS */
+    .result-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .result-form-title { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 16px; font-weight: bold; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     .form-field { margin-bottom: 12px; }
-
-    .form-label {
-      font-size: 0.68rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-light);
-      margin-bottom: 5px;
-      display: block;
-    }
-
-    .form-select, .form-input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 0.9rem;
-      color: var(--text);
-      background: white;
-      outline: none;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-
+    .form-label { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; display: block; }
+    .form-select, .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
     .form-select:focus, .form-input:focus { border-color: var(--green-mid); }
-
-    .wall-toggle {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 0;
-      cursor: pointer;
-      user-select: none;
-    }
-
+    .wall-toggle { display: flex; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; user-select: none; }
     .wall-toggle input { display: none; }
-
-    .toggle-track {
-      width: 44px;
-      height: 24px;
-      background: #ddd;
-      border-radius: 12px;
-      position: relative;
-      transition: background 0.2s;
-      flex-shrink: 0;
-    }
-
-    .toggle-track::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
+    .toggle-track { width: 44px; height: 24px; background: #ddd; border-radius: 12px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle-track::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     .wall-toggle input:checked + .toggle-track { background: var(--gold); }
     .wall-toggle input:checked + .toggle-track::after { transform: translateX(20px); }
-
     .toggle-label { font-size: 0.9rem; color: var(--text); }
-
-    .add-game-btn {
-      width: 100%;
-      padding: 13px;
-      background: var(--gold);
-      color: var(--green-dark);
-      border: none;
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 0.95rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.15s;
-      margin-top: 4px;
-    }
-
+    .add-game-btn { width: 100%; padding: 13px; background: var(--gold); color: var(--green-dark); border: none; border-radius: 8px; font-family: var(--font); font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
     .add-game-btn:hover { background: var(--gold-dark); }
 
-    /* ── GAMES LOG ───────────────────────────────────── */
+    /* GAMES LOG */
     .games-log { margin-bottom: 24px; }
-
-    .game-entry {
-      background: white;
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
+    .game-entry { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .game-entry-left { flex: 1; }
-
-    .game-table-num {
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text-light);
-      margin-bottom: 4px;
-    }
-
-    .game-players {
-      font-size: 0.88rem;
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .game-winner {
-      font-size: 0.82rem;
-      font-weight: bold;
-      color: var(--green-mid);
-      margin-top: 4px;
-    }
-
-    .game-wall-badge {
-      font-size: 0.72rem;
-      color: var(--text-light);
-      font-style: italic;
-    }
-
-    .game-delete {
-      background: none;
-      border: none;
-      color: #ccc;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 2px 6px;
-      flex-shrink: 0;
-    }
-
+    .game-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .game-players { font-size: 0.88rem; color: var(--text); line-height: 1.5; }
+    .game-winner { font-size: 0.82rem; font-weight: bold; color: var(--green-mid); margin-top: 4px; }
+    .game-wall-badge { font-size: 0.72rem; color: var(--text-light); font-style: italic; }
+    .game-delete { background: none; border: none; color: #ccc; font-size: 1.1rem; cursor: pointer; padding: 2px 6px; flex-shrink: 0; }
     .game-delete:hover { color: #B94040; }
 
-    /* ── SUBMIT SECTION ──────────────────────────────── */
-    .submit-section {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-
-    .submit-summary {
-      font-size: 0.88rem;
-      color: var(--text-light);
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-
-    .submit-btn {
-      width: 100%;
-      padding: 15px;
-      background: var(--green-dark);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-family: var(--font);
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
+    /* SUBMIT */
+    .submit-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .submit-summary { font-size: 0.88rem; color: var(--text-light); margin-bottom: 16px; line-height: 1.6; }
+    .submit-btn { width: 100%; padding: 15px; background: var(--green-dark); color: white; border: none; border-radius: 10px; font-family: var(--font); font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .submit-btn:hover { background: var(--green-mid); }
     .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
 
-    /* ── EMPTY STATE ─────────────────────────────────── */
-    .empty-state {
-      text-align: center;
-      color: var(--text-light);
-      padding: 48px 24px;
-      font-size: 0.9rem;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-
+    /* EMPTY */
+    .empty-state { text-align: center; color: var(--text-light); padding: 48px 24px; font-size: 0.9rem; background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .empty-icon { font-size: 2rem; margin-bottom: 12px; }
 
-    /* ── TOAST ───────────────────────────────────────── */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: var(--green-dark);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 0.9rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-      opacity: 0;
-      transition: opacity 0.3s, transform 0.3s;
-      z-index: 9999;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-
+    /* TOAST */
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green-dark); color: white; padding: 12px 24px; border-radius: 8px; font-family: var(--font); font-size: 0.9rem; box-shadow: 0 4px 16px rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 9999; pointer-events: none; white-space: nowrap; }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     #toast.gold { background: var(--gold); color: var(--green-dark); }
 
-    /* ── SUCCESS SCREEN ──────────────────────────────── */
-    #screen-success {
-      display: none;
-      min-height: 100vh;
-      background: var(--green-dark);
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      text-align: center;
-      padding: 40px 24px;
-    }
-
+    /* SUCCESS */
+    #screen-success { display: none; min-height: 100vh; background: var(--green-dark); align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 40px 24px; }
     .success-icon { font-size: 4rem; margin-bottom: 24px; }
     .success-title { font-size: 1.8rem; font-weight: bold; color: var(--gold); margin-bottom: 12px; }
     .success-sub { font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.7; max-width: 320px; }
 
-    /* ── SPINNER ─────────────────────────────────────── */
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.65s linear infinite;
-      display: none;
-    }
+    /* SPINNER */
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
     .loading .spinner { display: block; }
     .loading .btn-txt { opacity: 0.5; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 400px) {
-      .form-row { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
-<!-- CODE ENTRY SCREEN -->
+<!-- CODE ENTRY -->
 <div id="screen-code">
   <img class="code-logo" src="https://i.imgur.com/AU3nKdD.png" alt="MPR">
-  <div class="code-title">Host Portal</div>
-  <div class="code-sub">Enter your event access code to get started</div>
+  <div class="code-title">MPR Host Portal</div>
+  <div class="code-sub">Enter your 6-digit event access code</div>
   <div class="code-box">
     <label class="code-label">Access Code</label>
-    <input class="code-input" id="code-input" type="text" placeholder="EVT001-XXXXX" autocomplete="off" autocorrect="off" spellcheck="false">
+    <input class="code-input" id="code-input" type="text" placeholder="000000" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="6" inputmode="numeric">
     <button class="code-btn" id="code-btn" onclick="validateCode()">
       <div class="spinner"></div>
       <span class="btn-txt">Enter Portal →</span>
@@ -609,7 +161,6 @@
 
 <!-- MAIN APP -->
 <div id="screen-app" style="display:none; flex-direction:column; min-height:100vh;">
-
   <div class="app-header">
     <div class="app-header-top">
       <div>
@@ -627,7 +178,7 @@
 
   <div class="app-body">
 
-    <!-- CHECK IN PANEL -->
+    <!-- CHECK IN -->
     <div class="panel active" id="panel-checkin">
       <input type="text" class="search-bar" id="checkin-search" placeholder="Search by name..." oninput="renderMemberList()">
       <span class="section-label" id="member-count-label">All Members</span>
@@ -636,7 +187,7 @@
       </div>
     </div>
 
-    <!-- PLAYERS PANEL -->
+    <!-- PLAYERS -->
     <div class="panel" id="panel-players">
       <span class="section-label" id="players-count-label">Checked In (0)</span>
       <div id="players-list">
@@ -644,17 +195,14 @@
       </div>
     </div>
 
-    <!-- RESULTS PANEL -->
+    <!-- RESULTS -->
     <div class="panel" id="panel-results">
-
       <div class="result-form">
         <div class="result-form-title">Record a Game</div>
-
         <div class="form-field">
           <label class="form-label">Table Number</label>
           <input class="form-input" id="res-table" type="number" min="1" placeholder="1">
         </div>
-
         <div class="form-row">
           <div class="form-field" style="margin-bottom:0;">
             <label class="form-label">Player 1</label>
@@ -675,18 +223,15 @@
             <select class="form-select" id="res-p4"><option value="">Select...</option></select>
           </div>
         </div>
-
-        <div class="form-field" style="margin-top:12px;">
+        <div class="form-field" style="margin-top:12px;" id="winner-field">
           <label class="form-label">Winner</label>
           <select class="form-select" id="res-winner"><option value="">Select winner...</option></select>
         </div>
-
         <label class="wall-toggle">
-          <input type="checkbox" id="res-wall">
+          <input type="checkbox" id="res-wall" onchange="toggleWall(this)">
           <div class="toggle-track"></div>
           <span class="toggle-label">Wall Game (no winner)</span>
         </label>
-
         <button class="add-game-btn" onclick="addGame()">+ Add Game</button>
       </div>
 
@@ -702,28 +247,43 @@
           <span class="btn-txt">Submit All Results</span>
         </button>
       </div>
-
     </div>
+
   </div>
 </div>
 
-<!-- SUCCESS SCREEN -->
+<!-- SUCCESS -->
 <div id="screen-success" style="display:none; flex-direction:column;">
   <div class="success-icon">✅</div>
   <div class="success-title">Results Submitted</div>
-  <div class="success-sub" id="success-sub">All results have been recorded. The MPR team has been notified.</div>
+  <div class="success-sub" id="success-sub">All results have been recorded.</div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-  var SHEET_ID  = '17mrQewoVdPRMlvzqTdA_d7-XmxRnYvEuhyoT0q9uPfw';
-  var ENDPOINT  = 'https://script.google.com/macros/s/AKfycbyd5Pw5U_UubqprHfWP-NhZ-yVMH0YlDfWfH4WMNshn2Rg-PiQVQH3NjPsBR-UBH-Wr/exec';
+  var SHEET_ID    = '17mrQewoVdPRMlvzqTdA_d7-XmxRnYvEuhyoT0q9uPfw';
+  var ENDPOINT    = 'https://script.google.com/macros/s/AKfycbyd5Pw5U_UubqprHfWP-NhZ-yVMH0YlDfWfH4WMNshn2Rg-PiQVQH3NjPsBR-UBH-Wr/exec';
+  var STORAGE_KEY = 'mpr_host_session';
 
-  var currentEvent    = null;
-  var allMembers      = [];
-  var checkedInPlayers = [];
-  var gamesLog        = [];
+  var currentEvent     = null;
+  var allMembers       = [];
+  var checkedInPlayers = [];   // [{id, name}]
+  var gamesLog         = [];   // [{id, tableNumber, players[], winner, wallGame}]
+
+  // ── SESSION PERSISTENCE ─────────────────────────────────────────
+
+  function saveState() {
+    if (!currentEvent) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      eventId:          currentEvent['Event ID'],
+      eventData:        currentEvent,
+      checkedInPlayers: checkedInPlayers,
+      gamesLog:         gamesLog
+    }));
+  }
+
+  function clearState() { localStorage.removeItem(STORAGE_KEY); }
 
   // ── UTILITIES ────────────────────────────────────────────────────
 
@@ -739,24 +299,23 @@
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
     document.querySelectorAll('.app-tab').forEach(function(t) { t.classList.remove('active'); });
     document.getElementById('panel-' + name).classList.add('active');
-    var tabs = document.querySelectorAll('.app-tab');
-    var map = { checkin: 0, players: 1, results: 2 };
-    tabs[map[name]].classList.add('active');
+    var idx = { checkin: 0, players: 1, results: 2 };
+    document.querySelectorAll('.app-tab')[idx[name]].classList.add('active');
     if (name === 'players') renderPlayersList();
     if (name === 'results') renderPlayerDropdowns();
   }
 
-  async function fetchSheet(tabName) {
+  function fetchSheet(tabName) {
     var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tabName);
-    var res = await fetch(url);
-    var text = await res.text();
-    var json = JSON.parse(text.substring(47, text.length - 2));
-    var cols = json.table.cols.map(function(c) { return c.label; });
-    return json.table.rows.map(function(row) {
-      var obj = {};
-      row.c.forEach(function(cell, i) { obj[cols[i]] = cell ? cell.v : ''; });
-      return obj;
+      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tabName) + '&_=' + Date.now();
+    return fetch(url).then(function(r) { return r.text(); }).then(function(text) {
+      var json = JSON.parse(text.substring(47, text.length - 2));
+      var cols = json.table.cols.map(function(c) { return c.label; });
+      return json.table.rows.map(function(row) {
+        var obj = {};
+        row.c.forEach(function(cell, i) { obj[cols[i]] = cell ? cell.v : ''; });
+        return obj;
+      });
     });
   }
 
@@ -765,34 +324,31 @@
     try {
       var m = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
       if (m) {
-        var d = new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]));
-        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        return new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]))
+          .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
       }
       return new Date(raw).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     } catch(e) { return String(raw); }
   }
 
+  function escapeStr(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
   // ── CODE VALIDATION ───────────────────────────────────────────────
 
-  async function validateCode() {
-    var code = document.getElementById('code-input').value.trim().toUpperCase();
-    if (!code) {
-      document.getElementById('code-input').classList.add('error');
-      return;
-    }
+  function validateCode() {
+    var code = document.getElementById('code-input').value.trim();
+    if (!code) { document.getElementById('code-input').classList.add('error'); return; }
 
     var btn = document.getElementById('code-btn');
     btn.disabled = true;
     btn.classList.add('loading');
 
-    try {
-      var rows = await fetchSheet('Events');
+    fetchSheet('Events').then(function(rows) {
       var match = null;
       for (var i = 0; i < rows.length; i++) {
-        var hc = (rows[i]['Host Code'] || '').toString().trim().toUpperCase();
+        var hc = String(rows[i]['Host Code'] || '').trim();
         if (hc === code) { match = rows[i]; break; }
       }
-
       if (!match) {
         document.getElementById('code-input').classList.add('error');
         document.getElementById('code-err').classList.add('show');
@@ -800,91 +356,63 @@
         btn.classList.remove('loading');
         return;
       }
-
       currentEvent = match;
-      await launchApp();
-
-    } catch(e) {
+      launchApp();
+    }).catch(function() {
       document.getElementById('code-err').textContent = 'Connection error. Please try again.';
       document.getElementById('code-err').classList.add('show');
       btn.disabled = false;
       btn.classList.remove('loading');
-    }
+    });
   }
 
   document.getElementById('code-input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') validateCode();
-    document.getElementById('code-input').classList.remove('error');
+    this.classList.remove('error');
     document.getElementById('code-err').classList.remove('show');
   });
 
   // ── APP LAUNCH ────────────────────────────────────────────────────
 
-  async function launchApp() {
-    // Set header
-    var eventName = currentEvent['Event Name'] || 'Event';
-    var eventDate = parseDate(currentEvent['Event Date']);
-    var city      = currentEvent['City'] || '';
-    document.getElementById('app-event-name').textContent = eventName;
-    document.getElementById('app-event-meta').textContent = eventDate + (city ? ' · ' + city : '');
-
-    // Show app screen
+  function launchApp() {
+    document.getElementById('app-event-name').textContent = currentEvent['Event Name'] || 'Event';
+    document.getElementById('app-event-meta').textContent =
+      parseDate(currentEvent['Event Date']) + (currentEvent['City'] ? ' · ' + currentEvent['City'] : '');
     document.getElementById('screen-code').style.display = 'none';
     document.getElementById('screen-app').style.display  = 'flex';
-
-    // Load members
-    await loadMembers();
-    await loadCheckedIn();
     updateCheckedInBadge();
-  }
-
-  async function loadMembers() {
-    var rows  = await fetchSheet('Members');
-    var minMPR = parseFloat(currentEvent['Minimum MPR']) || 0;
-    var maxMPR = parseFloat(currentEvent['Maximum MPR']) || 10;
-    var format = currentEvent['Event Format'] || currentEvent['Event Type'] || '';
-    var isRated = format === 'Rated Open Play';
-
-    allMembers = rows.filter(function(r) {
-      var status = r['Membership Status'] || '';
-      if (status !== 'Active' && status !== 'Guest') return false;
-      if (isRated) {
-        var mpr = parseFloat(r['Published MPR']) || 0;
-        return mpr >= minMPR && mpr <= maxMPR;
-      }
-      return true;
-    }).map(function(r) {
-      return {
-        id:     r['Member ID'] || '',
-        name:   ((r['First Name'] || '') + ' ' + (r['Last Name'] || '')).trim(),
-        mpr:    parseFloat(r['Published MPR']) || 0,
-        status: r['Membership Status'] || ''
-      };
-    }).sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-    renderMemberList();
-  }
-
-  async function loadCheckedIn() {
-    try {
-      var rows = await fetchSheet('Check Ins');
-      var eventId = currentEvent['Event ID'] || '';
-      checkedInPlayers = rows
-        .filter(function(r) { return String(r['Event ID']) === String(eventId); })
-        .map(function(r) { return { id: r['Member ID'], name: r['Member Name'] }; });
-    } catch(e) {
-      checkedInPlayers = [];
-    }
+    renderGamesLog();
+    loadMembers();
   }
 
   function updateCheckedInBadge() {
     document.getElementById('app-checkin-badge').textContent = checkedInPlayers.length + ' checked in';
   }
 
+  function loadMembers() {
+    fetchSheet('Members').then(function(rows) {
+      allMembers = rows
+        .filter(function(r) {
+          var s = r['Membership Status'] || '';
+          return s === 'Member' || s === 'Guest' || s === 'Active';
+        })
+        .map(function(r) {
+          return {
+            id:     r['Member ID'] || '',
+            name:   ((r['First Name'] || '') + ' ' + (r['Last Name'] || '')).trim(),
+            mpr:    parseFloat(r['Published MPR']) || 0,
+            status: r['Membership Status'] || ''
+          };
+        })
+        .sort(function(a, b) { return a.name.localeCompare(b.name); });
+      renderMemberList();
+    });
+  }
+
   // ── CHECK IN ──────────────────────────────────────────────────────
 
-  function isCheckedIn(memberId) {
-    return checkedInPlayers.some(function(p) { return String(p.id) === String(memberId); });
+  function isCheckedIn(id) {
+    return checkedInPlayers.some(function(p) { return String(p.id) === String(id); });
   }
 
   function renderMemberList() {
@@ -892,11 +420,10 @@
     var filtered = allMembers.filter(function(m) {
       return !query || m.name.toLowerCase().includes(query);
     });
-
     document.getElementById('member-count-label').textContent =
       query ? 'Results (' + filtered.length + ')' : 'All Members (' + allMembers.length + ')';
 
-    if (filtered.length === 0) {
+    if (!filtered.length) {
       document.getElementById('member-list').innerHTML =
         '<div class="empty-state"><div class="empty-icon">🔍</div>No members found.</div>';
       return;
@@ -908,64 +435,66 @@
       html += '<div class="member-row' + (ci ? ' checked-in' : '') + '">' +
         '<div class="member-info">' +
           '<div class="member-name">' + m.name + '</div>' +
-          '<div class="member-mpr">MPR ' + (m.mpr ? m.mpr.toFixed(2) : '--') + ' · ' + m.status + '</div>' +
+          '<div class="member-sub">MPR ' + (m.mpr ? m.mpr.toFixed(2) : '--') + ' &nbsp;·&nbsp; ' + m.status + '</div>' +
         '</div>' +
         (ci
-          ? '<button class="checkin-btn is-in">✓ In</button>'
-          : '<button class="checkin-btn not-in" onclick="checkIn(\'' + m.id + '\',\'' + escapeStr(m.name) + '\')">Check In</button>'
+          ? '<button class="checkin-btn is-in" onclick="uncheckIn(\'' + escapeStr(m.id) + '\')">✓ Undo</button>'
+          : '<button class="checkin-btn not-in" onclick="checkIn(\'' + escapeStr(m.id) + '\',\'' + escapeStr(m.name) + '\')">Check In</button>'
         ) +
       '</div>';
     });
     document.getElementById('member-list').innerHTML = html;
   }
 
-  function escapeStr(s) {
-    return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  }
-
   function checkIn(memberId, memberName) {
     if (isCheckedIn(memberId)) return;
-
     checkedInPlayers.push({ id: memberId, name: memberName });
     updateCheckedInBadge();
     renderMemberList();
+    saveState();
 
-    // POST to Apps Script
+    // Write to Check Ins sheet only — never touches Members sheet
     fetch(ENDPOINT, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action:     'checkIn',
-        eventId:    currentEvent['Event ID'],
-        memberId:   memberId,
+        action: 'checkIn',
+        eventId: currentEvent['Event ID'],
+        memberId: memberId,
         memberName: memberName
       })
     });
-
     showToast(memberName + ' checked in ✓', true);
+  }
+
+  function uncheckIn(memberId) {
+    var name = '';
+    checkedInPlayers = checkedInPlayers.filter(function(p) {
+      if (String(p.id) === String(memberId)) { name = p.name; return false; }
+      return true;
+    });
+    updateCheckedInBadge();
+    renderMemberList();
+    saveState();
+    showToast((name || 'Player') + ' removed from check-in');
   }
 
   // ── PLAYERS LIST ──────────────────────────────────────────────────
 
   function renderPlayersList() {
-    document.getElementById('players-count-label').textContent =
-      'Checked In (' + checkedInPlayers.length + ')';
-
-    if (checkedInPlayers.length === 0) {
+    document.getElementById('players-count-label').textContent = 'Checked In (' + checkedInPlayers.length + ')';
+    if (!checkedInPlayers.length) {
       document.getElementById('players-list').innerHTML =
         '<div class="empty-state"><div class="empty-icon">👥</div>No one checked in yet.</div>';
       return;
     }
-
     var html = '';
     checkedInPlayers.forEach(function(p, i) {
       var member = allMembers.find(function(m) { return String(m.id) === String(p.id); });
-      var mpr = member ? member.mpr.toFixed(2) : '--';
       html += '<div class="player-chip">' +
         '<div class="player-num">' + (i + 1) + '</div>' +
         '<div class="player-chip-name">' + p.name + '</div>' +
-        '<div class="player-chip-mpr">MPR ' + mpr + '</div>' +
+        '<div class="player-chip-mpr">MPR ' + (member ? member.mpr.toFixed(2) : '--') + '</div>' +
       '</div>';
     });
     document.getElementById('players-list').innerHTML = html;
@@ -973,24 +502,24 @@
 
   // ── RESULTS ───────────────────────────────────────────────────────
 
+  function toggleWall(cb) {
+    var wf = document.getElementById('winner-field');
+    wf.style.opacity        = cb.checked ? '0.4' : '1';
+    wf.style.pointerEvents  = cb.checked ? 'none' : '';
+  }
+
   function renderPlayerDropdowns() {
-    var selects = ['res-p1', 'res-p2', 'res-p3', 'res-p4', 'res-winner'];
-    selects.forEach(function(id) {
+    // All 4 player dropdowns and winner show ALL checked-in players
+    // No cross-game deduplication — multiple simultaneous games supported
+    var ids = ['res-p1','res-p2','res-p3','res-p4','res-winner'];
+    ids.forEach(function(id) {
       var sel = document.getElementById(id);
       var isWinner = id === 'res-winner';
-      var placeholder = isWinner ? 'Select winner...' : 'Select...';
-      var opts = '<option value="">' + placeholder + '</option>';
+      var opts = '<option value="">' + (isWinner ? 'Select winner...' : 'Select...') + '</option>';
       checkedInPlayers.forEach(function(p) {
         opts += '<option value="' + escapeStr(p.name) + '">' + p.name + '</option>';
       });
       sel.innerHTML = opts;
-    });
-
-    // Wall game toggle hides winner
-    document.getElementById('res-wall').addEventListener('change', function() {
-      var winnerField = document.getElementById('res-winner').parentNode;
-      winnerField.style.opacity = this.checked ? '0.4' : '1';
-      winnerField.style.pointerEvents = this.checked ? 'none' : '';
     });
   }
 
@@ -1003,58 +532,52 @@
     var winner = document.getElementById('res-winner').value;
     var isWall = document.getElementById('res-wall').checked;
 
-    var players = [p1, p2, p3, p4].filter(Boolean);
-    if (players.length < 4) {
-      showToast('Please select all 4 players');
-      return;
+    var players = [p1, p2, p3, p4];
+
+    // All 4 must be selected
+    if (players.some(function(p) { return !p; })) {
+      showToast('Please select all 4 players'); return;
     }
+
+    // No duplicate players within this single game
+    if (new Set(players).size < 4) {
+      showToast('Each player can only appear once per game'); return;
+    }
+
     if (!isWall && !winner) {
-      showToast('Select a winner or mark as wall game');
-      return;
+      showToast('Select a winner or mark as Wall Game'); return;
     }
 
-    var unique = new Set(players);
-    if (unique.size < 4) {
-      showToast('Each player can only appear once');
-      return;
-    }
-
-    var game = {
+    gamesLog.push({
+      id:          Date.now(),
       tableNumber: table || '--',
-      players: players,
-      winner: isWall ? null : winner,
-      wallGame: isWall
-    };
+      players:     players,
+      winner:      isWall ? null : winner,
+      wallGame:    isWall
+    });
 
-    gamesLog.push(game);
     renderGamesLog();
+    saveState();
 
-    // Reset form
-    document.getElementById('res-table').value = '';
+    // Reset form — keep table number, clear player/winner selects
     ['res-p1','res-p2','res-p3','res-p4','res-winner'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     document.getElementById('res-wall').checked = false;
-    var winnerField = document.getElementById('res-winner').parentNode;
-    winnerField.style.opacity = '1';
-    winnerField.style.pointerEvents = '';
+    toggleWall({ checked: false });
 
     showToast('Game ' + gamesLog.length + ' recorded ✓', true);
   }
 
   function renderGamesLog() {
     var log = document.getElementById('games-log');
-    var list = document.getElementById('games-list');
-
-    if (gamesLog.length === 0) {
+    if (!gamesLog.length) {
       log.style.display = 'none';
       document.getElementById('submit-summary').textContent = 'No games recorded yet. Use the form above to add games.';
       return;
     }
-
     log.style.display = 'block';
     document.getElementById('games-count-label').textContent = 'Games Recorded (' + gamesLog.length + ')';
-
     var html = '';
     gamesLog.forEach(function(g, i) {
       html += '<div class="game-entry">' +
@@ -1069,8 +592,7 @@
         '<button class="game-delete" onclick="deleteGame(' + i + ')">✕</button>' +
       '</div>';
     });
-    list.innerHTML = html;
-
+    document.getElementById('games-list').innerHTML = html;
     document.getElementById('submit-summary').textContent =
       gamesLog.length + ' game' + (gamesLog.length === 1 ? '' : 's') + ' recorded · ' +
       checkedInPlayers.length + ' player' + (checkedInPlayers.length === 1 ? '' : 's') + ' checked in.';
@@ -1079,70 +601,95 @@
   function deleteGame(index) {
     gamesLog.splice(index, 1);
     renderGamesLog();
+    saveState();
   }
 
   // ── SUBMIT ────────────────────────────────────────────────────────
 
   function submitResults() {
-    if (gamesLog.length === 0) {
-      showToast('No games to submit yet');
-      return;
-    }
-
+    if (!gamesLog.length) { showToast('No games to submit yet'); return; }
     var btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.classList.add('loading');
+    btn.disabled = true; btn.classList.add('loading');
 
     var eventId   = currentEvent['Event ID'];
     var eventName = currentEvent['Event Name'] || 'Event';
-    var promises  = [];
-
-    // Submit each game
-    gamesLog.forEach(function(g) {
-      promises.push(fetch(ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
+    var promises  = gamesLog.map(function(g) {
+      return fetch(ENDPOINT, {
+        method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action:      'gameResult',
-          eventId:     eventId,
+          action: 'gameResult', eventId: eventId,
           tableNumber: g.tableNumber,
-          player1:     g.players[0] || '',
-          player2:     g.players[1] || '',
-          player3:     g.players[2] || '',
-          player4:     g.players[3] || '',
-          winner:      g.winner || '',
-          wallGame:    g.wallGame
+          player1: g.players[0] || '', player2: g.players[1] || '',
+          player3: g.players[2] || '', player4: g.players[3] || '',
+          winner: g.winner || '', wallGame: g.wallGame
         })
-      }));
+      });
     });
 
-    // Send notification
     promises.push(fetch(ENDPOINT, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action:         'submitResults',
-        eventId:        eventId,
-        eventName:      eventName,
-        gameCount:      gamesLog.length,
-        checkedInCount: checkedInPlayers.length
+        action: 'submitResults', eventId: eventId, eventName: eventName,
+        gameCount: gamesLog.length, checkedInCount: checkedInPlayers.length
       })
     }));
 
     Promise.all(promises).then(function() {
-      document.getElementById('screen-app').style.display    = 'none';
+      clearState();
+      document.getElementById('screen-app').style.display     = 'none';
       document.getElementById('screen-success').style.display = 'flex';
       document.getElementById('success-sub').textContent =
         gamesLog.length + ' games submitted for ' + eventName + '. The MPR team has been notified.';
     }).catch(function() {
-      btn.disabled = false;
-      btn.classList.remove('loading');
+      btn.disabled = false; btn.classList.remove('loading');
       showToast('Submission error — please try again');
     });
   }
-</script>
 
+  // ── AUTO-RESTORE ON RELOAD ────────────────────────────────────────
+
+  (function checkSavedSession() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var state = JSON.parse(raw);
+      if (!state.eventId || !state.eventData) return;
+
+      // Show resume banner on the code screen
+      var banner = document.createElement('div');
+      banner.style.cssText = 'margin-top:24px;background:rgba(201,163,74,0.15);border:1px solid rgba(201,163,74,0.4);border-radius:12px;padding:16px 20px;text-align:center;max-width:400px;width:90%;';
+      banner.innerHTML =
+        '<div style="color:#C9A34A;font-size:0.88rem;font-weight:bold;margin-bottom:6px;">Session Found</div>' +
+        '<div style="color:rgba(255,255,255,0.75);font-size:0.82rem;margin-bottom:14px;">' +
+          (state.eventData['Event Name'] || state.eventId) + '<br>' +
+          (state.checkedInPlayers || []).length + ' checked in &nbsp;·&nbsp; ' +
+          (state.gamesLog || []).length + ' games recorded' +
+        '</div>' +
+        '<button onclick="resumeSession()" style="background:#C9A34A;color:#1A4D42;border:none;padding:9px 22px;border-radius:8px;font-family:Georgia,serif;font-weight:bold;cursor:pointer;margin-right:8px;font-size:0.9rem;">Resume</button>' +
+        '<button onclick="clearState();this.closest(\'div\').remove();" style="background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.25);padding:9px 22px;border-radius:8px;font-family:Georgia,serif;cursor:pointer;font-size:0.9rem;">Start Fresh</button>';
+
+      document.getElementById('screen-code').appendChild(banner);
+
+      // Pre-load state so resumeSession() works instantly
+      currentEvent     = state.eventData;
+      checkedInPlayers = state.checkedInPlayers || [];
+      gamesLog         = state.gamesLog || [];
+
+    } catch(e) {}
+  })();
+
+  function resumeSession() {
+    document.getElementById('screen-code').style.display = 'none';
+    document.getElementById('screen-app').style.display  = 'flex';
+    document.getElementById('app-event-name').textContent = currentEvent['Event Name'] || 'Event';
+    document.getElementById('app-event-meta').textContent =
+      parseDate(currentEvent['Event Date']) + (currentEvent['City'] ? ' · ' + currentEvent['City'] : '');
+    updateCheckedInBadge();
+    renderGamesLog();
+    loadMembers();
+  }
+</script>
 </body>
 </html>
