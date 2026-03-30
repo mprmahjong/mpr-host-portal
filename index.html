@@ -72,27 +72,40 @@
     .player-chip-name { font-size: 0.95rem; font-weight: bold; flex: 1; }
     .player-chip-mpr { font-size: 0.78rem; color: var(--text-light); }
 
-    /* RESULTS */
-    .result-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
-    .result-form-title { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 16px; font-weight: bold; }
+    /* ── RESULTS — TWO-STAGE SYSTEM ───────────────────────────────── */
+
+    /* Stage 1: Start a table */
+    .start-table-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .start-table-title { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 16px; font-weight: bold; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     .form-field { margin-bottom: 12px; }
     .form-label { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; display: block; }
     .form-select, .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
     .form-select:focus, .form-input:focus { border-color: var(--green-mid); }
-    .wall-toggle { display: flex; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; user-select: none; }
-    .wall-toggle input { display: none; }
-    .toggle-track { width: 44px; height: 24px; background: #ddd; border-radius: 12px; position: relative; transition: background 0.2s; flex-shrink: 0; }
-    .toggle-track::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-    .wall-toggle input:checked + .toggle-track { background: var(--gold); }
-    .wall-toggle input:checked + .toggle-track::after { transform: translateX(20px); }
-    .toggle-label { font-size: 0.9rem; color: var(--text); }
-    .add-game-btn { width: 100%; padding: 13px; background: var(--gold); color: var(--green-dark); border: none; border-radius: 8px; font-family: var(--font); font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
-    .add-game-btn:hover { background: var(--gold-dark); }
+    .start-table-btn { width: 100%; padding: 13px; background: var(--green-dark); color: white; border: none; border-radius: 8px; font-family: var(--font); font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
+    .start-table-btn:hover { background: var(--green-mid); }
 
-    /* GAMES LOG */
-    .games-log { margin-bottom: 24px; }
-    .game-entry { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    /* Active tables */
+    .active-tables-section { margin-bottom: 20px; }
+    .active-table-card { background: white; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--gold); }
+    .active-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .active-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: bold; }
+    .active-table-players { font-size: 0.88rem; color: var(--text); margin-bottom: 12px; line-height: 1.6; }
+    .active-table-players span { display: inline-block; background: var(--green-light); border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 0.82rem; }
+    .winner-row { display: flex; gap: 8px; align-items: center; }
+    .winner-select { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
+    .winner-select:focus { border-color: var(--green-mid); }
+    .wall-btn { padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--text-light); background: white; color: var(--text-light); font-family: var(--font); font-size: 0.82rem; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+    .wall-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .wall-btn.active { background: var(--gold); color: white; border-color: var(--gold); }
+    .record-btn { padding: 10px 16px; border-radius: 8px; border: none; background: var(--gold); color: var(--green-dark); font-family: var(--font); font-size: 0.88rem; font-weight: bold; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+    .record-btn:hover { background: var(--gold-dark); }
+    .cancel-table-btn { background: none; border: none; color: #ccc; font-size: 1rem; cursor: pointer; padding: 2px 6px; }
+    .cancel-table-btn:hover { color: #B94040; }
+
+    /* Completed games log */
+    .games-log { margin-bottom: 20px; }
+    .game-entry { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-left: 4px solid var(--green-mid); }
     .game-entry-left { flex: 1; }
     .game-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
     .game-players { font-size: 0.88rem; color: var(--text); line-height: 1.5; }
@@ -128,7 +141,7 @@
     .loading .spinner { display: block; }
     .loading .btn-txt { opacity: 0.5; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } }
+    @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } .winner-row { flex-wrap: wrap; } }
   </style>
 </head>
 <body>
@@ -140,7 +153,7 @@
   <div class="code-sub" id="code-sub">Enter your 6-digit event access code</div>
   <div class="code-box">
     <label class="code-label">Access Code</label>
-    <input class="code-input" id="code-input" type="text" placeholder="000000" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="6" inputmode="numeric">
+    <input class="code-input" id="code-input" type="text" placeholder="000000" autocomplete="off" maxlength="6" inputmode="numeric">
     <button class="code-btn" id="code-btn" onclick="validateCode()">
       <div class="spinner"></div>
       <span class="btn-txt">Enter Portal →</span>
@@ -191,58 +204,59 @@
 
     <!-- RESULTS -->
     <div class="panel" id="panel-results">
-      <div class="result-form">
-        <div class="result-form-title">Record a Game</div>
+
+      <!-- Stage 1: Start a new table -->
+      <div class="start-table-form">
+        <div class="start-table-title">Start a Table</div>
         <div class="form-field">
           <label class="form-label">Table Number</label>
-          <input class="form-input" id="res-table" type="number" min="1" placeholder="1">
+          <input class="form-input" id="st-table" type="number" min="1" placeholder="1">
         </div>
         <div class="form-row">
           <div class="form-field" style="margin-bottom:0;">
             <label class="form-label">Player 1</label>
-            <select class="form-select" id="res-p1"><option value="">Select...</option></select>
+            <select class="form-select" id="st-p1"><option value="">Select...</option></select>
           </div>
           <div class="form-field" style="margin-bottom:0;">
             <label class="form-label">Player 2</label>
-            <select class="form-select" id="res-p2"><option value="">Select...</option></select>
+            <select class="form-select" id="st-p2"><option value="">Select...</option></select>
           </div>
         </div>
         <div class="form-row" style="margin-top:12px;">
           <div class="form-field" style="margin-bottom:0;">
             <label class="form-label">Player 3</label>
-            <select class="form-select" id="res-p3"><option value="">Select...</option></select>
+            <select class="form-select" id="st-p3"><option value="">Select...</option></select>
           </div>
           <div class="form-field" style="margin-bottom:0;">
             <label class="form-label">Player 4</label>
-            <select class="form-select" id="res-p4"><option value="">Select...</option></select>
+            <select class="form-select" id="st-p4"><option value="">Select...</option></select>
           </div>
         </div>
-        <div class="form-field" style="margin-top:12px;" id="winner-field">
-          <label class="form-label">Winner</label>
-          <select class="form-select" id="res-winner"><option value="">Select winner...</option></select>
-        </div>
-        <label class="wall-toggle">
-          <input type="checkbox" id="res-wall" onchange="toggleWall(this)">
-          <div class="toggle-track"></div>
-          <span class="toggle-label">Wall Game (no winner)</span>
-        </label>
-        <button class="add-game-btn" onclick="addGame()">+ Add Game</button>
+        <button class="start-table-btn" onclick="startTable()" style="margin-top:16px;">▶ Start Table</button>
       </div>
 
+      <!-- Stage 2: Active tables (awaiting winner) -->
+      <div id="active-tables-section" style="display:none;">
+        <span class="section-label" id="active-tables-label">Active Tables (0)</span>
+        <div id="active-tables-list"></div>
+      </div>
+
+      <!-- Completed games log -->
       <div class="games-log" id="games-log" style="display:none;">
-        <span class="section-label" id="games-count-label">Games Recorded (0)</span>
+        <span class="section-label" id="games-count-label">Completed Games (0)</span>
         <div id="games-list"></div>
       </div>
 
+      <!-- Submit -->
       <div class="submit-section">
-        <div class="submit-summary" id="submit-summary">No games recorded yet. Use the form above to add games.</div>
+        <div class="submit-summary" id="submit-summary">No games recorded yet. Start a table above, then record the winner when it finishes.</div>
         <button class="submit-btn" id="submit-btn" onclick="submitResults()">
           <div class="spinner"></div>
           <span class="btn-txt">Submit All Results</span>
         </button>
       </div>
-    </div>
 
+    </div>
   </div>
 </div>
 
@@ -262,29 +276,27 @@
 
   var currentEvent     = null;
   var allMembers       = [];
-  var checkedInPlayers = [];
-  var gamesLog         = [];
+  var checkedInPlayers = [];  // [{id, name}]
+  var activeTables     = [];  // [{id, tableNumber, players[], wallGame}] — in progress
+  var gamesLog         = [];  // [{id, tableNumber, players[], winner, wallGame}] — completed
 
   // ── PERSISTENCE ──────────────────────────────────────────────────
 
   function saveState() {
     if (!currentEvent) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      eventId:          currentEvent['Event ID'],
-      eventData:        currentEvent,
+      eventId: currentEvent['Event ID'], eventData: currentEvent,
       checkedInPlayers: checkedInPlayers,
-      gamesLog:         gamesLog
+      activeTables: activeTables,
+      gamesLog: gamesLog
     }));
   }
 
   function clearState() { localStorage.removeItem(STORAGE_KEY); }
 
   function getSavedState() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch(e) { return null; }
+    try { var r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; }
+    catch(e) { return null; }
   }
 
   // ── UTILITIES ────────────────────────────────────────────────────
@@ -293,23 +305,22 @@
     var t = document.getElementById('toast');
     t.textContent = msg;
     t.className = 'show' + (isGold ? ' gold' : '');
-    clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(function() { t.className = ''; }, 2800);
+    clearTimeout(window._tt);
+    window._tt = setTimeout(function() { t.className = ''; }, 2800);
   }
 
   function showPanel(name) {
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
     document.querySelectorAll('.app-tab').forEach(function(t) { t.classList.remove('active'); });
     document.getElementById('panel-' + name).classList.add('active');
-    var idx = { checkin: 0, players: 1, results: 2 };
-    document.querySelectorAll('.app-tab')[idx[name]].classList.add('active');
+    document.querySelectorAll('.app-tab')[{checkin:0,players:1,results:2}[name]].classList.add('active');
     if (name === 'players') renderPlayersList();
-    if (name === 'results') renderPlayerDropdowns();
+    if (name === 'results') refreshStartTableDropdowns();
   }
 
-  function fetchSheet(tabName) {
+  function fetchSheet(tab) {
     var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tabName) + '&_=' + Date.now();
+      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tab) + '&_=' + Date.now();
     return fetch(url).then(function(r) { return r.text(); }).then(function(text) {
       var json = JSON.parse(text.substring(47, text.length - 2));
       var cols = json.table.cols.map(function(c) { return c.label; });
@@ -325,63 +336,48 @@
     if (!raw) return '';
     try {
       var m = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
-      if (m) return new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]))
-        .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      return new Date(raw).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      if (m) return new Date(+m[1], +m[2], +m[3]).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+      return new Date(raw).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
     } catch(e) { return String(raw); }
   }
 
-  function esc(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+  function esc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
   // ── CODE VALIDATION ───────────────────────────────────────────────
-  // Always required — even when resuming a session
 
   function validateCode() {
     var code = document.getElementById('code-input').value.trim();
     if (!code) { document.getElementById('code-input').classList.add('error'); return; }
-
     var btn = document.getElementById('code-btn');
-    btn.disabled = true;
-    btn.classList.add('loading');
+    btn.disabled = true; btn.classList.add('loading');
 
     fetchSheet('Events').then(function(rows) {
       var match = null;
       for (var i = 0; i < rows.length; i++) {
-        var hc = String(rows[i]['Host Code'] || '').trim();
-        if (hc === code) { match = rows[i]; break; }
+        if (String(rows[i]['Host Code'] || '').trim() === code) { match = rows[i]; break; }
       }
-
       if (!match) {
         document.getElementById('code-input').classList.add('error');
         document.getElementById('code-err').classList.add('show');
-        btn.disabled = false;
-        btn.classList.remove('loading');
+        btn.disabled = false; btn.classList.remove('loading');
         return;
       }
-
-      // Check if there's a saved session for this exact event
       var saved = getSavedState();
       if (saved && String(saved.eventId) === String(match['Event ID'])) {
-        // Restore session for this event
         currentEvent     = match;
         checkedInPlayers = saved.checkedInPlayers || [];
+        activeTables     = saved.activeTables     || [];
         gamesLog         = saved.gamesLog         || [];
-        showToast('Session restored — ' + checkedInPlayers.length + ' checked in, ' + gamesLog.length + ' games', true);
+        showToast('Session restored — ' + checkedInPlayers.length + ' checked in, ' + gamesLog.length + ' games completed', true);
       } else {
-        // New session — clear any old state
         clearState();
-        currentEvent     = match;
-        checkedInPlayers = [];
-        gamesLog         = [];
+        currentEvent = match; checkedInPlayers = []; activeTables = []; gamesLog = [];
       }
-
       launchApp();
-
     }).catch(function() {
       document.getElementById('code-err').textContent = 'Connection error. Please try again.';
       document.getElementById('code-err').classList.add('show');
-      btn.disabled = false;
-      btn.classList.remove('loading');
+      btn.disabled = false; btn.classList.remove('loading');
     });
   }
 
@@ -391,17 +387,16 @@
     document.getElementById('code-err').classList.remove('show');
   });
 
-  // Show saved session hint on page load (info only — code still required)
-  (function showSessionHint() {
+  // Session hint on load
+  (function() {
     var saved = getSavedState();
     if (!saved || !saved.eventData) return;
-    var banner = document.getElementById('session-banner');
-    var sub    = document.getElementById('session-banner-sub');
-    banner.style.display = 'block';
-    sub.textContent = (saved.eventData['Event Name'] || saved.eventId) + ' · ' +
-      (saved.checkedInPlayers || []).length + ' checked in · ' +
-      (saved.gamesLog || []).length + ' games recorded' +
-      '\nEnter your code to resume.';
+    var b = document.getElementById('session-banner');
+    b.style.display = 'block';
+    document.getElementById('session-banner-sub').textContent =
+      (saved.eventData['Event Name'] || saved.eventId) + ' · ' +
+      (saved.checkedInPlayers||[]).length + ' checked in · ' +
+      (saved.gamesLog||[]).length + ' games completed\nEnter your code to resume.';
     document.getElementById('code-sub').textContent = 'Enter your code to resume your session';
   })();
 
@@ -414,6 +409,7 @@
     document.getElementById('screen-code').style.display = 'none';
     document.getElementById('screen-app').style.display  = 'flex';
     updateCheckedInBadge();
+    renderActiveTables();
     renderGamesLog();
     loadMembers();
   }
@@ -425,255 +421,249 @@
   function loadMembers() {
     fetchSheet('Members').then(function(rows) {
       allMembers = rows
-        .filter(function(r) {
-          var s = r['Membership Status'] || '';
-          return s === 'Member' || s === 'Guest' || s === 'Active';
-        })
-        .map(function(r) {
-          return {
-            id:     r['Member ID'] || '',
-            name:   ((r['First Name'] || '') + ' ' + (r['Last Name'] || '')).trim(),
-            mpr:    parseFloat(r['Published MPR']) || 0,
-            status: r['Membership Status'] || ''
-          };
-        })
-        .filter(function(m) { return m.name.trim() !== ''; })
-        .sort(function(a, b) { return a.name.localeCompare(b.name); });
-
+        .filter(function(r) { var s = r['Membership Status']||''; return s==='Member'||s==='Guest'||s==='Active'; })
+        .map(function(r) { return {
+          id: r['Member ID']||'',
+          name: ((r['First Name']||'')+' '+(r['Last Name']||'')).trim(),
+          mpr: parseFloat(r['Published MPR'])||0,
+          status: r['Membership Status']||''
+        }; })
+        .filter(function(m) { return m.name.trim(); })
+        .sort(function(a,b) { return a.name.localeCompare(b.name); });
       renderMemberList();
-      // Always repopulate dropdowns after members load
-      renderPlayerDropdowns();
+      refreshStartTableDropdowns();
     });
   }
 
   // ── CHECK IN ──────────────────────────────────────────────────────
 
-  function isCheckedIn(id) {
-    return checkedInPlayers.some(function(p) { return String(p.id) === String(id); });
-  }
+  function isCheckedIn(id) { return checkedInPlayers.some(function(p) { return String(p.id)===String(id); }); }
 
   function renderMemberList() {
-    var query = (document.getElementById('checkin-search').value || '').toLowerCase().trim();
-    var filtered = allMembers.filter(function(m) {
-      return !query || m.name.toLowerCase().indexOf(query) !== -1;
-    });
-
-    document.getElementById('member-count-label').textContent =
-      query ? 'Results (' + filtered.length + ')' : 'All Members (' + allMembers.length + ')';
-
+    var q = (document.getElementById('checkin-search').value||'').toLowerCase().trim();
+    var filtered = allMembers.filter(function(m) { return !q || m.name.toLowerCase().indexOf(q)!==-1; });
+    document.getElementById('member-count-label').textContent = q ? 'Results ('+filtered.length+')' : 'All Members ('+allMembers.length+')';
     if (!filtered.length) {
-      document.getElementById('member-list').innerHTML =
-        '<div class="empty-state"><div class="empty-icon">🔍</div>No members found.</div>';
+      document.getElementById('member-list').innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>No members found.</div>';
       return;
     }
-
     var html = '';
     filtered.forEach(function(m) {
       var ci = isCheckedIn(m.id);
-      html += '<div class="member-row' + (ci ? ' checked-in' : '') + '">' +
-        '<div class="member-info">' +
-          '<div class="member-name">' + m.name + '</div>' +
-          '<div class="member-sub">MPR ' + (m.mpr ? m.mpr.toFixed(2) : '--') + ' &nbsp;·&nbsp; ' + m.status + '</div>' +
-        '</div>' +
+      html += '<div class="member-row'+(ci?' checked-in':'')+'">'+
+        '<div class="member-info"><div class="member-name">'+m.name+'</div>'+
+        '<div class="member-sub">MPR '+(m.mpr?m.mpr.toFixed(2):'--')+' &nbsp;·&nbsp; '+m.status+'</div></div>'+
         (ci
-          ? '<button class="checkin-btn is-in" onclick="uncheckIn(\'' + esc(m.id) + '\')">✓ Undo</button>'
-          : '<button class="checkin-btn not-in" onclick="checkIn(\'' + esc(m.id) + '\',\'' + esc(m.name) + '\')">Check In</button>'
-        ) +
-      '</div>';
+          ? '<button class="checkin-btn is-in" onclick="uncheckIn(\''+esc(m.id)+'\')">✓ Undo</button>'
+          : '<button class="checkin-btn not-in" onclick="checkIn(\''+esc(m.id)+'\',\''+esc(m.name)+'\')">Check In</button>'
+        )+'</div>';
     });
     document.getElementById('member-list').innerHTML = html;
   }
 
-  function checkIn(memberId, memberName) {
-    if (isCheckedIn(memberId)) return;
-    checkedInPlayers.push({ id: memberId, name: memberName });
-    updateCheckedInBadge();
-    renderMemberList();
-    renderPlayerDropdowns();   // repopulate immediately so Results tab is ready
-    saveState();
-    showToast(memberName + ' checked in ✓', true);
-    // NOTE: Apps Script POST for check-in will be added once Apps Script is updated
+  function checkIn(id, name) {
+    if (isCheckedIn(id)) return;
+    checkedInPlayers.push({id:id, name:name});
+    updateCheckedInBadge(); renderMemberList(); refreshStartTableDropdowns(); saveState();
+    showToast(name + ' checked in ✓', true);
   }
 
-  function uncheckIn(memberId) {
+  function uncheckIn(id) {
     var name = '';
-    checkedInPlayers = checkedInPlayers.filter(function(p) {
-      if (String(p.id) === String(memberId)) { name = p.name; return false; }
-      return true;
-    });
-    updateCheckedInBadge();
-    renderMemberList();
-    renderPlayerDropdowns();   // repopulate after removal too
-    saveState();
-    showToast((name || 'Player') + ' removed');
+    checkedInPlayers = checkedInPlayers.filter(function(p) { if(String(p.id)===String(id)){name=p.name;return false;} return true; });
+    updateCheckedInBadge(); renderMemberList(); refreshStartTableDropdowns(); saveState();
+    showToast((name||'Player') + ' removed');
   }
 
   // ── PLAYERS LIST ──────────────────────────────────────────────────
 
   function renderPlayersList() {
-    document.getElementById('players-count-label').textContent = 'Checked In (' + checkedInPlayers.length + ')';
+    document.getElementById('players-count-label').textContent = 'Checked In ('+checkedInPlayers.length+')';
     if (!checkedInPlayers.length) {
-      document.getElementById('players-list').innerHTML =
-        '<div class="empty-state"><div class="empty-icon">👥</div>No one checked in yet.</div>';
+      document.getElementById('players-list').innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div>No one checked in yet.</div>';
       return;
     }
     var html = '';
     checkedInPlayers.forEach(function(p, i) {
-      var member = allMembers.find(function(m) { return String(m.id) === String(p.id); });
-      html += '<div class="player-chip">' +
-        '<div class="player-num">' + (i + 1) + '</div>' +
-        '<div class="player-chip-name">' + p.name + '</div>' +
-        '<div class="player-chip-mpr">MPR ' + (member ? member.mpr.toFixed(2) : '--') + '</div>' +
-      '</div>';
+      var m = allMembers.find(function(x) { return String(x.id)===String(p.id); });
+      html += '<div class="player-chip"><div class="player-num">'+(i+1)+'</div>'+
+        '<div class="player-chip-name">'+p.name+'</div>'+
+        '<div class="player-chip-mpr">MPR '+(m?m.mpr.toFixed(2):'--')+'</div></div>';
     });
     document.getElementById('players-list').innerHTML = html;
   }
 
-  // ── RESULTS ───────────────────────────────────────────────────────
+  // ── RESULTS: STAGE 1 — START TABLE ───────────────────────────────
 
-  function toggleWall(cb) {
-    var wf = document.getElementById('winner-field');
-    wf.style.opacity       = cb.checked ? '0.4' : '1';
-    wf.style.pointerEvents = cb.checked ? 'none' : '';
-  }
-
-  function renderPlayerDropdowns() {
-    // Build options from all currently checked-in players
-    // No cross-game deduplication — same player can be in multiple concurrent games
-    var opts = '<option value="">Select...</option>';
-    checkedInPlayers.forEach(function(p) {
-      opts += '<option value="' + esc(p.name) + '">' + p.name + '</option>';
-    });
-    var winnerOpts = '<option value="">Select winner...</option>';
-    checkedInPlayers.forEach(function(p) {
-      winnerOpts += '<option value="' + esc(p.name) + '">' + p.name + '</option>';
-    });
-
-    // Preserve current selections if possible
-    var ids = ['res-p1','res-p2','res-p3','res-p4'];
+  function refreshStartTableDropdowns() {
+    var ids = ['st-p1','st-p2','st-p3','st-p4'];
     ids.forEach(function(id) {
       var sel = document.getElementById(id);
-      var prev = sel.value;
-      sel.innerHTML = opts;
-      if (prev) sel.value = prev;
+      var prev = sel ? sel.value : '';
+      var opts = '<option value="">Select...</option>';
+      checkedInPlayers.forEach(function(p) {
+        opts += '<option value="'+esc(p.name)+'">'+p.name+'</option>';
+      });
+      if (sel) { sel.innerHTML = opts; if (prev) sel.value = prev; }
     });
-    var winSel = document.getElementById('res-winner');
-    var prevWin = winSel.value;
-    winSel.innerHTML = winnerOpts;
-    if (prevWin) winSel.value = prevWin;
   }
 
-  function addGame() {
-    var table  = document.getElementById('res-table').value.trim();
-    var p1     = document.getElementById('res-p1').value;
-    var p2     = document.getElementById('res-p2').value;
-    var p3     = document.getElementById('res-p3').value;
-    var p4     = document.getElementById('res-p4').value;
-    var winner = document.getElementById('res-winner').value;
-    var isWall = document.getElementById('res-wall').checked;
+  function startTable() {
+    var tableNum = document.getElementById('st-table').value.trim();
+    var p1 = document.getElementById('st-p1').value;
+    var p2 = document.getElementById('st-p2').value;
+    var p3 = document.getElementById('st-p3').value;
+    var p4 = document.getElementById('st-p4').value;
+    var players = [p1,p2,p3,p4];
 
-    var players = [p1, p2, p3, p4];
+    if (players.some(function(p){return !p;})) { showToast('Please select all 4 players'); return; }
+    if (new Set(players).size < 4) { showToast('Each player can only appear once per table'); return; }
 
-    if (players.some(function(p) { return !p; })) {
-      showToast('Please select all 4 players'); return;
-    }
-    if (new Set(players).size < 4) {
-      showToast('Each player can only appear once per game'); return;
-    }
-    if (!isWall && !winner) {
-      showToast('Select a winner or mark as Wall Game'); return;
-    }
-
-    gamesLog.push({
-      id:          Date.now(),
-      tableNumber: table || '--',
-      players:     players,
-      winner:      isWall ? null : winner,
-      wallGame:    isWall
-    });
-
-    renderGamesLog();
+    activeTables.push({ id: Date.now(), tableNumber: tableNum||'?', players: players, wallGame: false });
+    renderActiveTables();
     saveState();
 
-    // Clear player selects but keep table number
-    ['res-p1','res-p2','res-p3','res-p4','res-winner'].forEach(function(id) {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('res-wall').checked = false;
-    toggleWall({ checked: false });
+    // Clear player selects, keep table number
+    ['st-p1','st-p2','st-p3','st-p4'].forEach(function(id) { document.getElementById(id).value = ''; });
+    refreshStartTableDropdowns();
 
-    // Re-render dropdowns so they stay populated for the next game
-    renderPlayerDropdowns();
-
-    showToast('Game ' + gamesLog.length + ' recorded ✓', true);
+    showToast('Table '+(tableNum||'?')+' started ✓', true);
   }
+
+  // ── RESULTS: STAGE 2 — ACTIVE TABLES ─────────────────────────────
+
+  function renderActiveTables() {
+    var section = document.getElementById('active-tables-section');
+    var list    = document.getElementById('active-tables-list');
+
+    if (!activeTables.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
+
+    var html = '';
+    activeTables.forEach(function(t) {
+      var winnerOpts = '<option value="">Select winner...</option>';
+      t.players.forEach(function(p) { winnerOpts += '<option value="'+esc(p)+'">'+p+'</option>'; });
+
+      html += '<div class="active-table-card" id="atc-'+t.id+'">';
+      html += '<div class="active-table-header">';
+      html += '<div class="active-table-num">🟡 Table '+t.tableNumber+' — In Progress</div>';
+      html += '<button class="cancel-table-btn" onclick="cancelTable('+t.id+')" title="Cancel table">✕</button>';
+      html += '</div>';
+      html += '<div class="active-table-players">';
+      t.players.forEach(function(p) { html += '<span>'+p+'</span>'; });
+      html += '</div>';
+      html += '<div class="winner-row">';
+      html += '<select class="winner-select" id="w-'+t.id+'"'+( t.wallGame ? ' disabled' : '')+'>'+winnerOpts+'</select>';
+      html += '<button class="wall-btn'+(t.wallGame?' active':'')+'" onclick="toggleWall('+t.id+')">'+(t.wallGame?'✓ Wall':'Wall Game')+'</button>';
+      html += '<button class="record-btn" onclick="recordResult('+t.id+')">Record →</button>';
+      html += '</div></div>';
+    });
+    list.innerHTML = html;
+  }
+
+  function toggleWall(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    t.wallGame = !t.wallGame;
+    renderActiveTables();
+    saveState();
+  }
+
+  function recordResult(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+
+    var winner = '';
+    if (!t.wallGame) {
+      var sel = document.getElementById('w-'+tableId);
+      winner = sel ? sel.value : '';
+      if (!winner) { showToast('Select a winner or mark as Wall Game'); return; }
+    }
+
+    // Move from active → completed
+    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner, wallGame: t.wallGame });
+    activeTables = activeTables.filter(function(x){return x.id!==tableId;});
+
+    renderActiveTables();
+    renderGamesLog();
+    saveState();
+    showToast('Table '+t.tableNumber+' recorded ✓', true);
+  }
+
+  function cancelTable(tableId) {
+    activeTables = activeTables.filter(function(x){return x.id!==tableId;});
+    renderActiveTables();
+    saveState();
+    showToast('Table cancelled');
+  }
+
+  // ── COMPLETED GAMES LOG ───────────────────────────────────────────
 
   function renderGamesLog() {
     var log = document.getElementById('games-log');
     if (!gamesLog.length) {
       log.style.display = 'none';
-      document.getElementById('submit-summary').textContent = 'No games recorded yet. Use the form above to add games.';
+      document.getElementById('submit-summary').textContent = 'No games completed yet. Start a table above, then record the winner when it finishes.';
       return;
     }
     log.style.display = 'block';
-    document.getElementById('games-count-label').textContent = 'Games Recorded (' + gamesLog.length + ')';
+    document.getElementById('games-count-label').textContent = 'Completed Games ('+gamesLog.length+')';
+
     var html = '';
     gamesLog.forEach(function(g, i) {
-      html += '<div class="game-entry">' +
-        '<div class="game-entry-left">' +
-          '<div class="game-table-num">Table ' + g.tableNumber + '</div>' +
-          '<div class="game-players">' + g.players.join(' · ') + '</div>' +
-          (g.wallGame
-            ? '<div class="game-wall-badge">Wall game — no winner</div>'
-            : '<div class="game-winner">🏆 ' + g.winner + '</div>'
-          ) +
-        '</div>' +
-        '<button class="game-delete" onclick="deleteGame(' + i + ')">✕</button>' +
-      '</div>';
+      html += '<div class="game-entry"><div class="game-entry-left">'+
+        '<div class="game-table-num">Table '+g.tableNumber+'</div>'+
+        '<div class="game-players">'+g.players.join(' · ')+'</div>'+
+        (g.wallGame
+          ? '<div class="game-wall-badge">Wall game — no winner</div>'
+          : '<div class="game-winner">🏆 '+g.winner+'</div>'
+        )+
+        '</div><button class="game-delete" onclick="deleteGame('+i+')">✕</button></div>';
     });
     document.getElementById('games-list').innerHTML = html;
     document.getElementById('submit-summary').textContent =
-      gamesLog.length + ' game' + (gamesLog.length === 1 ? '' : 's') + ' recorded · ' +
-      checkedInPlayers.length + ' player' + (checkedInPlayers.length === 1 ? '' : 's') + ' checked in.';
+      gamesLog.length+' game'+(gamesLog.length===1?'':' s')+' completed · '+
+      checkedInPlayers.length+' player'+(checkedInPlayers.length===1?'':'s')+' checked in.';
   }
 
-  function deleteGame(index) {
-    gamesLog.splice(index, 1);
-    renderGamesLog();
-    saveState();
-  }
+  function deleteGame(index) { gamesLog.splice(index,1); renderGamesLog(); saveState(); }
 
   // ── SUBMIT ────────────────────────────────────────────────────────
 
   function submitResults() {
-    if (!gamesLog.length) { showToast('No games to submit yet'); return; }
+    if (!gamesLog.length) { showToast('No completed games to submit yet'); return; }
+    if (activeTables.length > 0) {
+      showToast(activeTables.length+' table(s) still in progress — record or cancel them first');
+      return;
+    }
+
     var btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.classList.add('loading');
+    btn.disabled = true; btn.classList.add('loading');
 
     var eventId   = currentEvent['Event ID'];
     var eventName = currentEvent['Event Name'] || 'Event';
 
     var promises = gamesLog.map(function(g) {
       return fetch(ENDPOINT, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          action: 'gameResult', eventId: eventId,
-          tableNumber: g.tableNumber,
-          player1: g.players[0] || '', player2: g.players[1] || '',
-          player3: g.players[2] || '', player4: g.players[3] || '',
-          winner: g.winner || '', wallGame: g.wallGame
+          action:'gameResult', eventId:eventId,
+          tableNumber:g.tableNumber,
+          player1:g.players[0]||'', player2:g.players[1]||'',
+          player3:g.players[2]||'', player4:g.players[3]||'',
+          winner:g.winner||'', wallGame:g.wallGame
         })
       });
     });
 
     promises.push(fetch(ENDPOINT, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        action: 'submitResults', eventId: eventId, eventName: eventName,
-        gameCount: gamesLog.length, checkedInCount: checkedInPlayers.length
+        action:'submitResults', eventId:eventId, eventName:eventName,
+        gameCount:gamesLog.length, checkedInCount:checkedInPlayers.length
       })
     }));
 
@@ -682,10 +672,9 @@
       document.getElementById('screen-app').style.display     = 'none';
       document.getElementById('screen-success').style.display = 'flex';
       document.getElementById('success-sub').textContent =
-        gamesLog.length + ' games submitted for ' + eventName + '. The MPR team has been notified.';
+        gamesLog.length+' games submitted for '+eventName+'. MPR ratings will be updated shortly.';
     }).catch(function() {
-      btn.disabled = false;
-      btn.classList.remove('loading');
+      btn.disabled = false; btn.classList.remove('loading');
       showToast('Submission error — please try again');
     });
   }
