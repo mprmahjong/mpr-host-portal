@@ -6,28 +6,16 @@
   <title>MPR Host Portal</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
     :root {
-      --green-dark: #1A4D42;
-      --green-mid: #2E6B5E;
-      --green-light: #F0F7F4;
-      --gold: #C9A34A;
-      --gold-dark: #b8922f;
-      --white: #ffffff;
-      --text: #2D2D2D;
-      --text-light: #888;
-      --border: #D0E8E0;
+      --green-dark: #1A4D42; --green-mid: #2E6B5E; --green-light: #F0F7F4;
+      --gold: #C9A34A; --gold-dark: #b8922f;
+      --text: #2D2D2D; --text-light: #888; --border: #D0E8E0;
       --font: 'Georgia', serif;
     }
-
     body { font-family: var(--font); background: var(--green-light); color: var(--text); min-height: 100vh; }
 
     /* CODE ENTRY */
-    #screen-code {
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 32px 24px; background: var(--green-dark);
-    }
+    #screen-code { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; background: var(--green-dark); }
     .code-logo { width: 140px; height: 140px; margin-bottom: 24px; object-fit: contain; }
     .code-title { font-size: 1.6rem; font-weight: bold; color: var(--gold); margin-bottom: 8px; text-align: center; }
     .code-sub { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 40px; text-align: center; }
@@ -41,6 +29,9 @@
     .code-btn:disabled { background: #aaa; cursor: not-allowed; }
     .code-err { font-size: 0.82rem; color: #B94040; text-align: center; margin-top: 12px; display: none; }
     .code-err.show { display: block; }
+    .session-banner { margin-top: 20px; background: rgba(201,163,74,0.15); border: 1px solid rgba(201,163,74,0.4); border-radius: 10px; padding: 14px 18px; text-align: center; max-width: 400px; width: 100%; }
+    .session-banner-title { color: var(--gold); font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; }
+    .session-banner-sub { color: rgba(255,255,255,0.7); font-size: 0.8rem; line-height: 1.5; }
 
     /* MAIN APP */
     #screen-app { display: none; flex-direction: column; min-height: 100vh; }
@@ -137,7 +128,6 @@
     .loading .spinner { display: block; }
     .loading .btn-txt { opacity: 0.5; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -147,7 +137,7 @@
 <div id="screen-code">
   <img class="code-logo" src="https://i.imgur.com/AU3nKdD.png" alt="MPR">
   <div class="code-title">MPR Host Portal</div>
-  <div class="code-sub">Enter your 6-digit event access code</div>
+  <div class="code-sub" id="code-sub">Enter your 6-digit event access code</div>
   <div class="code-box">
     <label class="code-label">Access Code</label>
     <input class="code-input" id="code-input" type="text" placeholder="000000" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="6" inputmode="numeric">
@@ -156,6 +146,10 @@
       <span class="btn-txt">Enter Portal →</span>
     </button>
     <div class="code-err" id="code-err">Code not found. Please check and try again.</div>
+  </div>
+  <div class="session-banner" id="session-banner" style="display:none;">
+    <div class="session-banner-title">⚡ Previous Session Found</div>
+    <div class="session-banner-sub" id="session-banner-sub"></div>
   </div>
 </div>
 
@@ -268,10 +262,10 @@
 
   var currentEvent     = null;
   var allMembers       = [];
-  var checkedInPlayers = [];   // [{id, name}]
-  var gamesLog         = [];   // [{id, tableNumber, players[], winner, wallGame}]
+  var checkedInPlayers = [];
+  var gamesLog         = [];
 
-  // ── SESSION PERSISTENCE ─────────────────────────────────────────
+  // ── PERSISTENCE ──────────────────────────────────────────────────
 
   function saveState() {
     if (!currentEvent) return;
@@ -284,6 +278,14 @@
   }
 
   function clearState() { localStorage.removeItem(STORAGE_KEY); }
+
+  function getSavedState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e) { return null; }
+  }
 
   // ── UTILITIES ────────────────────────────────────────────────────
 
@@ -323,17 +325,16 @@
     if (!raw) return '';
     try {
       var m = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
-      if (m) {
-        return new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]))
-          .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      }
+      if (m) return new Date(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]))
+        .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
       return new Date(raw).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     } catch(e) { return String(raw); }
   }
 
-  function escapeStr(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+  function esc(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
   // ── CODE VALIDATION ───────────────────────────────────────────────
+  // Always required — even when resuming a session
 
   function validateCode() {
     var code = document.getElementById('code-input').value.trim();
@@ -349,6 +350,7 @@
         var hc = String(rows[i]['Host Code'] || '').trim();
         if (hc === code) { match = rows[i]; break; }
       }
+
       if (!match) {
         document.getElementById('code-input').classList.add('error');
         document.getElementById('code-err').classList.add('show');
@@ -356,8 +358,25 @@
         btn.classList.remove('loading');
         return;
       }
-      currentEvent = match;
+
+      // Check if there's a saved session for this exact event
+      var saved = getSavedState();
+      if (saved && String(saved.eventId) === String(match['Event ID'])) {
+        // Restore session for this event
+        currentEvent     = match;
+        checkedInPlayers = saved.checkedInPlayers || [];
+        gamesLog         = saved.gamesLog         || [];
+        showToast('Session restored — ' + checkedInPlayers.length + ' checked in, ' + gamesLog.length + ' games', true);
+      } else {
+        // New session — clear any old state
+        clearState();
+        currentEvent     = match;
+        checkedInPlayers = [];
+        gamesLog         = [];
+      }
+
       launchApp();
+
     }).catch(function() {
       document.getElementById('code-err').textContent = 'Connection error. Please try again.';
       document.getElementById('code-err').classList.add('show');
@@ -371,6 +390,20 @@
     this.classList.remove('error');
     document.getElementById('code-err').classList.remove('show');
   });
+
+  // Show saved session hint on page load (info only — code still required)
+  (function showSessionHint() {
+    var saved = getSavedState();
+    if (!saved || !saved.eventData) return;
+    var banner = document.getElementById('session-banner');
+    var sub    = document.getElementById('session-banner-sub');
+    banner.style.display = 'block';
+    sub.textContent = (saved.eventData['Event Name'] || saved.eventId) + ' · ' +
+      (saved.checkedInPlayers || []).length + ' checked in · ' +
+      (saved.gamesLog || []).length + ' games recorded' +
+      '\nEnter your code to resume.';
+    document.getElementById('code-sub').textContent = 'Enter your code to resume your session';
+  })();
 
   // ── APP LAUNCH ────────────────────────────────────────────────────
 
@@ -404,8 +437,12 @@
             status: r['Membership Status'] || ''
           };
         })
+        .filter(function(m) { return m.name.trim() !== ''; })
         .sort(function(a, b) { return a.name.localeCompare(b.name); });
+
       renderMemberList();
+      // Always repopulate dropdowns after members load
+      renderPlayerDropdowns();
     });
   }
 
@@ -418,8 +455,9 @@
   function renderMemberList() {
     var query = (document.getElementById('checkin-search').value || '').toLowerCase().trim();
     var filtered = allMembers.filter(function(m) {
-      return !query || m.name.toLowerCase().includes(query);
+      return !query || m.name.toLowerCase().indexOf(query) !== -1;
     });
+
     document.getElementById('member-count-label').textContent =
       query ? 'Results (' + filtered.length + ')' : 'All Members (' + allMembers.length + ')';
 
@@ -438,8 +476,8 @@
           '<div class="member-sub">MPR ' + (m.mpr ? m.mpr.toFixed(2) : '--') + ' &nbsp;·&nbsp; ' + m.status + '</div>' +
         '</div>' +
         (ci
-          ? '<button class="checkin-btn is-in" onclick="uncheckIn(\'' + escapeStr(m.id) + '\')">✓ Undo</button>'
-          : '<button class="checkin-btn not-in" onclick="checkIn(\'' + escapeStr(m.id) + '\',\'' + escapeStr(m.name) + '\')">Check In</button>'
+          ? '<button class="checkin-btn is-in" onclick="uncheckIn(\'' + esc(m.id) + '\')">✓ Undo</button>'
+          : '<button class="checkin-btn not-in" onclick="checkIn(\'' + esc(m.id) + '\',\'' + esc(m.name) + '\')">Check In</button>'
         ) +
       '</div>';
     });
@@ -451,20 +489,10 @@
     checkedInPlayers.push({ id: memberId, name: memberName });
     updateCheckedInBadge();
     renderMemberList();
+    renderPlayerDropdowns();   // repopulate immediately so Results tab is ready
     saveState();
-
-    // Write to Check Ins sheet only — never touches Members sheet
-    fetch(ENDPOINT, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'checkIn',
-        eventId: currentEvent['Event ID'],
-        memberId: memberId,
-        memberName: memberName
-      })
-    });
     showToast(memberName + ' checked in ✓', true);
+    // NOTE: Apps Script POST for check-in will be added once Apps Script is updated
   }
 
   function uncheckIn(memberId) {
@@ -475,8 +503,9 @@
     });
     updateCheckedInBadge();
     renderMemberList();
+    renderPlayerDropdowns();   // repopulate after removal too
     saveState();
-    showToast((name || 'Player') + ' removed from check-in');
+    showToast((name || 'Player') + ' removed');
   }
 
   // ── PLAYERS LIST ──────────────────────────────────────────────────
@@ -504,23 +533,34 @@
 
   function toggleWall(cb) {
     var wf = document.getElementById('winner-field');
-    wf.style.opacity        = cb.checked ? '0.4' : '1';
-    wf.style.pointerEvents  = cb.checked ? 'none' : '';
+    wf.style.opacity       = cb.checked ? '0.4' : '1';
+    wf.style.pointerEvents = cb.checked ? 'none' : '';
   }
 
   function renderPlayerDropdowns() {
-    // All 4 player dropdowns and winner show ALL checked-in players
-    // No cross-game deduplication — multiple simultaneous games supported
-    var ids = ['res-p1','res-p2','res-p3','res-p4','res-winner'];
+    // Build options from all currently checked-in players
+    // No cross-game deduplication — same player can be in multiple concurrent games
+    var opts = '<option value="">Select...</option>';
+    checkedInPlayers.forEach(function(p) {
+      opts += '<option value="' + esc(p.name) + '">' + p.name + '</option>';
+    });
+    var winnerOpts = '<option value="">Select winner...</option>';
+    checkedInPlayers.forEach(function(p) {
+      winnerOpts += '<option value="' + esc(p.name) + '">' + p.name + '</option>';
+    });
+
+    // Preserve current selections if possible
+    var ids = ['res-p1','res-p2','res-p3','res-p4'];
     ids.forEach(function(id) {
       var sel = document.getElementById(id);
-      var isWinner = id === 'res-winner';
-      var opts = '<option value="">' + (isWinner ? 'Select winner...' : 'Select...') + '</option>';
-      checkedInPlayers.forEach(function(p) {
-        opts += '<option value="' + escapeStr(p.name) + '">' + p.name + '</option>';
-      });
+      var prev = sel.value;
       sel.innerHTML = opts;
+      if (prev) sel.value = prev;
     });
+    var winSel = document.getElementById('res-winner');
+    var prevWin = winSel.value;
+    winSel.innerHTML = winnerOpts;
+    if (prevWin) winSel.value = prevWin;
   }
 
   function addGame() {
@@ -534,16 +574,12 @@
 
     var players = [p1, p2, p3, p4];
 
-    // All 4 must be selected
     if (players.some(function(p) { return !p; })) {
       showToast('Please select all 4 players'); return;
     }
-
-    // No duplicate players within this single game
     if (new Set(players).size < 4) {
       showToast('Each player can only appear once per game'); return;
     }
-
     if (!isWall && !winner) {
       showToast('Select a winner or mark as Wall Game'); return;
     }
@@ -559,12 +595,14 @@
     renderGamesLog();
     saveState();
 
-    // Reset form — keep table number, clear player/winner selects
+    // Clear player selects but keep table number
     ['res-p1','res-p2','res-p3','res-p4','res-winner'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     document.getElementById('res-wall').checked = false;
     toggleWall({ checked: false });
+
+    // Re-render dropdowns so they stay populated for the next game
     renderPlayerDropdowns();
 
     showToast('Game ' + gamesLog.length + ' recorded ✓', true);
@@ -610,11 +648,13 @@
   function submitResults() {
     if (!gamesLog.length) { showToast('No games to submit yet'); return; }
     var btn = document.getElementById('submit-btn');
-    btn.disabled = true; btn.classList.add('loading');
+    btn.disabled = true;
+    btn.classList.add('loading');
 
     var eventId   = currentEvent['Event ID'];
     var eventName = currentEvent['Event Name'] || 'Event';
-    var promises  = gamesLog.map(function(g) {
+
+    var promises = gamesLog.map(function(g) {
       return fetch(ENDPOINT, {
         method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
@@ -644,52 +684,10 @@
       document.getElementById('success-sub').textContent =
         gamesLog.length + ' games submitted for ' + eventName + '. The MPR team has been notified.';
     }).catch(function() {
-      btn.disabled = false; btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.classList.remove('loading');
       showToast('Submission error — please try again');
     });
-  }
-
-  // ── AUTO-RESTORE ON RELOAD ────────────────────────────────────────
-
-  (function checkSavedSession() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      var state = JSON.parse(raw);
-      if (!state.eventId || !state.eventData) return;
-
-      // Show resume banner on the code screen
-      var banner = document.createElement('div');
-      banner.style.cssText = 'margin-top:24px;background:rgba(201,163,74,0.15);border:1px solid rgba(201,163,74,0.4);border-radius:12px;padding:16px 20px;text-align:center;max-width:400px;width:90%;';
-      banner.innerHTML =
-        '<div style="color:#C9A34A;font-size:0.88rem;font-weight:bold;margin-bottom:6px;">Session Found</div>' +
-        '<div style="color:rgba(255,255,255,0.75);font-size:0.82rem;margin-bottom:14px;">' +
-          (state.eventData['Event Name'] || state.eventId) + '<br>' +
-          (state.checkedInPlayers || []).length + ' checked in &nbsp;·&nbsp; ' +
-          (state.gamesLog || []).length + ' games recorded' +
-        '</div>' +
-        '<button onclick="resumeSession()" style="background:#C9A34A;color:#1A4D42;border:none;padding:9px 22px;border-radius:8px;font-family:Georgia,serif;font-weight:bold;cursor:pointer;margin-right:8px;font-size:0.9rem;">Resume</button>' +
-        '<button onclick="clearState();this.closest(\'div\').remove();" style="background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.25);padding:9px 22px;border-radius:8px;font-family:Georgia,serif;cursor:pointer;font-size:0.9rem;">Start Fresh</button>';
-
-      document.getElementById('screen-code').appendChild(banner);
-
-      // Pre-load state so resumeSession() works instantly
-      currentEvent     = state.eventData;
-      checkedInPlayers = state.checkedInPlayers || [];
-      gamesLog         = state.gamesLog || [];
-
-    } catch(e) {}
-  })();
-
-  function resumeSession() {
-    document.getElementById('screen-code').style.display = 'none';
-    document.getElementById('screen-app').style.display  = 'flex';
-    document.getElementById('app-event-name').textContent = currentEvent['Event Name'] || 'Event';
-    document.getElementById('app-event-meta').textContent =
-      parseDate(currentEvent['Event Date']) + (currentEvent['City'] ? ' · ' + currentEvent['City'] : '');
-    updateCheckedInBadge();
-    renderGamesLog();
-    loadMembers();
   }
 </script>
 </body>
