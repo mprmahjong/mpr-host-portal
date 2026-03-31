@@ -16,8 +16,7 @@
 
     /* CODE ENTRY */
     #screen-code { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; background: var(--green-dark); }
-    .code-logo { width: 140px; height: 140px; margin-bottom: 24px; object-fit: contain; }
-    .code-title { font-size: 1.6rem; font-weight: bold; color: var(--gold); margin-bottom: 8px; text-align: center; }
+    .code-title { font-size: 1.8rem; font-weight: bold; color: var(--gold); margin-bottom: 8px; text-align: center; }
     .code-sub { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 40px; text-align: center; }
     .code-box { background: white; border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
     .code-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; display: block; }
@@ -78,8 +77,8 @@
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     .form-field { margin-bottom: 12px; }
     .form-label { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; display: block; }
-    .form-select, .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
-    .form-select:focus, .form-input:focus { border-color: var(--green-mid); }
+    .form-select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
+    .form-select:focus { border-color: var(--green-mid); }
     .start-table-btn { width: 100%; padding: 13px; background: var(--green-dark); color: white; border: none; border-radius: 8px; font-family: var(--font); font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
     .start-table-btn:hover { background: var(--green-mid); }
 
@@ -117,6 +116,7 @@
     .submit-btn { width: 100%; padding: 15px; background: var(--green-dark); color: white; border: none; border-radius: 10px; font-family: var(--font); font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .submit-btn:hover { background: var(--green-mid); }
     .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .submit-progress { font-size: 0.82rem; color: rgba(255,255,255,0.8); margin-top: 6px; text-align: center; display: none; }
 
     /* EMPTY */
     .empty-state { text-align: center; color: var(--text-light); padding: 48px 24px; font-size: 0.9rem; background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
@@ -145,7 +145,6 @@
 
 <!-- CODE ENTRY -->
 <div id="screen-code">
-  <img class="code-logo" src="https://i.imgur.com/AU3nKdD.png" alt="MPR">
   <div class="code-title">MPR Host Portal</div>
   <div class="code-sub" id="code-sub">Enter your 6-digit event access code</div>
   <div class="code-box">
@@ -208,22 +207,14 @@
           <label class="form-label">Table Number</label>
           <select class="form-select" id="st-table">
             <option value="">Select #...</option>
-            <option value="1">Table 1</option>
-            <option value="2">Table 2</option>
-            <option value="3">Table 3</option>
-            <option value="4">Table 4</option>
-            <option value="5">Table 5</option>
-            <option value="6">Table 6</option>
-            <option value="7">Table 7</option>
-            <option value="8">Table 8</option>
-            <option value="9">Table 9</option>
-            <option value="10">Table 10</option>
-            <option value="11">Table 11</option>
-            <option value="12">Table 12</option>
-            <option value="13">Table 13</option>
-            <option value="14">Table 14</option>
-            <option value="15">Table 15</option>
-            <option value="16">Table 16</option>
+            <option value="1">Table 1</option><option value="2">Table 2</option>
+            <option value="3">Table 3</option><option value="4">Table 4</option>
+            <option value="5">Table 5</option><option value="6">Table 6</option>
+            <option value="7">Table 7</option><option value="8">Table 8</option>
+            <option value="9">Table 9</option><option value="10">Table 10</option>
+            <option value="11">Table 11</option><option value="12">Table 12</option>
+            <option value="13">Table 13</option><option value="14">Table 14</option>
+            <option value="15">Table 15</option><option value="16">Table 16</option>
           </select>
         </div>
         <div class="form-row">
@@ -263,8 +254,9 @@
         <div class="submit-summary" id="submit-summary">No games completed yet. Start a table above, then record the winner when it finishes.</div>
         <button class="submit-btn" id="submit-btn" onclick="submitResults()">
           <div class="spinner"></div>
-          <span class="btn-txt">Submit All Results</span>
+          <span class="btn-txt" id="submit-btn-txt">Submit All Results</span>
         </button>
+        <div class="submit-progress" id="submit-progress"></div>
       </div>
 
     </div>
@@ -353,6 +345,8 @@
   }
 
   function esc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+  function delay(ms) { return new Promise(function(res) { setTimeout(res, ms); }); }
 
   // ── CODE VALIDATION ───────────────────────────────────────────────
 
@@ -513,8 +507,7 @@
 
   function refreshStartTableDropdowns() {
     var activePlayers = getActivePlayers();
-    var ids = ['st-p1','st-p2','st-p3','st-p4'];
-    ids.forEach(function(id) {
+    ['st-p1','st-p2','st-p3','st-p4'].forEach(function(id) {
       var sel = document.getElementById(id);
       var prev = sel ? sel.value : '';
       var opts = '<option value="">Select...</option>';
@@ -538,7 +531,6 @@
     if (players.some(function(p){return !p;})) { showToast('Please select all 4 players'); return; }
     if (new Set(players).size < 4) { showToast('Each player can only appear once per table'); return; }
 
-    // Prevent same player at two active tables simultaneously
     var activePlayers = getActivePlayers();
     var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
     if (conflict) { showToast(conflict + ' is already at an active table'); return; }
@@ -547,11 +539,9 @@
     renderActiveTables();
     saveState();
 
-    // Reset form
     document.getElementById('st-table').value = '';
     ['st-p1','st-p2','st-p3','st-p4'].forEach(function(id) { document.getElementById(id).value = ''; });
     refreshStartTableDropdowns();
-
     showToast('Table '+tableNum+' started ✓', true);
   }
 
@@ -560,7 +550,7 @@
   function renderActiveTables() {
     var section = document.getElementById('active-tables-section');
     var list    = document.getElementById('active-tables-list');
-    if (!activeTables.length) { section.style.display = 'none'; return; }
+    if (!activeTables.length) { section.style.display = 'none'; refreshStartTableDropdowns(); return; }
     section.style.display = 'block';
     document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
 
@@ -648,7 +638,7 @@
 
   function deleteGame(index) { gamesLog.splice(index,1); renderGamesLog(); saveState(); }
 
-  // ── SUBMIT ────────────────────────────────────────────────────────
+  // ── SUBMIT — SEQUENTIAL ───────────────────────────────────────────
 
   function submitResults() {
     if (!gamesLog.length) { showToast('No completed games to submit yet'); return; }
@@ -656,43 +646,73 @@
       showToast(activeTables.length+' table(s) still in progress — record or cancel them first');
       return;
     }
-    var btn = document.getElementById('submit-btn');
-    btn.disabled = true; btn.classList.add('loading');
+
+    var btn      = document.getElementById('submit-btn');
+    var progress = document.getElementById('submit-progress');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    progress.style.display = 'block';
 
     var eventId   = currentEvent['Event ID'];
     var eventName = currentEvent['Event Name'] || 'Event';
+    var total     = gamesLog.length;
+    var index     = 0;
 
-    var promises = gamesLog.map(function(g) {
+    // Send each game one at a time with a 500ms gap
+    function sendNextGame() {
+      if (index >= total) {
+        // All games sent — wait 1s then fire the process trigger
+        progress.textContent = 'Processing results...';
+        return delay(1000).then(sendSubmitTrigger);
+      }
+
+      var g = gamesLog[index];
+      progress.textContent = 'Sending game ' + (index + 1) + ' of ' + total + '...';
+      index++;
+
       return fetch(ENDPOINT, {
-        method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action:'gameResult', eventId:eventId,
-          tableNumber:g.tableNumber,
-          player1:g.players[0]||'', player2:g.players[1]||'',
-          player3:g.players[2]||'', player4:g.players[3]||'',
-          winner:g.winner||'', wallGame:g.wallGame
+          action: 'gameResult',
+          eventId: eventId,
+          tableNumber: g.tableNumber,
+          player1: g.players[0] || '',
+          player2: g.players[1] || '',
+          player3: g.players[2] || '',
+          player4: g.players[3] || '',
+          winner: g.winner || '',
+          wallGame: g.wallGame
+        })
+      }).then(function() {
+        return delay(500); // 500ms gap between each game write
+      }).then(sendNextGame);
+    }
+
+    function sendSubmitTrigger() {
+      return fetch(ENDPOINT, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submitResults',
+          eventId: eventId,
+          eventName: eventName,
+          gameCount: total,
+          checkedInCount: checkedInPlayers.length
         })
       });
-    });
+    }
 
-    promises.push(fetch(ENDPOINT, {
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        action:'submitResults', eventId:eventId, eventName:eventName,
-        gameCount:gamesLog.length, checkedInCount:checkedInPlayers.length
-      })
-    }));
-
-    Promise.all(promises).then(function() {
+    sendNextGame().then(function() {
       clearState();
       document.getElementById('screen-app').style.display     = 'none';
       document.getElementById('screen-success').style.display = 'flex';
       document.getElementById('success-sub').textContent =
-        gamesLog.length+' games submitted for '+eventName+'. MPR ratings will be updated shortly.';
+        total + ' game' + (total === 1 ? '' : 's') + ' submitted for ' + eventName + '. MPR ratings will be updated shortly.';
     }).catch(function() {
-      btn.disabled = false; btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      progress.style.display = 'none';
       showToast('Submission error — please try again');
     });
   }
