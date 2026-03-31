@@ -72,9 +72,7 @@
     .player-chip-name { font-size: 0.95rem; font-weight: bold; flex: 1; }
     .player-chip-mpr { font-size: 0.78rem; color: var(--text-light); }
 
-    /* ── RESULTS — TWO-STAGE SYSTEM ───────────────────────────────── */
-
-    /* Stage 1: Start a table */
+    /* RESULTS */
     .start-table-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
     .start-table-title { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 16px; font-weight: bold; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
@@ -85,12 +83,11 @@
     .start-table-btn { width: 100%; padding: 13px; background: var(--green-dark); color: white; border: none; border-radius: 8px; font-family: var(--font); font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
     .start-table-btn:hover { background: var(--green-mid); }
 
-    /* Active tables */
-    .active-tables-section { margin-bottom: 20px; }
+    /* ACTIVE TABLES */
     .active-table-card { background: white; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--gold); }
     .active-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .active-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: bold; }
-    .active-table-players { font-size: 0.88rem; color: var(--text); margin-bottom: 12px; line-height: 1.6; }
+    .active-table-players { margin-bottom: 12px; }
     .active-table-players span { display: inline-block; background: var(--green-light); border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 0.82rem; }
     .winner-row { display: flex; gap: 8px; align-items: center; }
     .winner-select { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
@@ -103,7 +100,7 @@
     .cancel-table-btn { background: none; border: none; color: #ccc; font-size: 1rem; cursor: pointer; padding: 2px 6px; }
     .cancel-table-btn:hover { color: #B94040; }
 
-    /* Completed games log */
+    /* GAMES LOG */
     .games-log { margin-bottom: 20px; }
     .game-entry { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-left: 4px solid var(--green-mid); }
     .game-entry-left { flex: 1; }
@@ -205,12 +202,29 @@
     <!-- RESULTS -->
     <div class="panel" id="panel-results">
 
-      <!-- Stage 1: Start a new table -->
       <div class="start-table-form">
         <div class="start-table-title">Start a Table</div>
         <div class="form-field">
           <label class="form-label">Table Number</label>
-          <input class="form-input" id="st-table" type="number" min="1" placeholder="1">
+          <select class="form-select" id="st-table">
+            <option value="">Select #...</option>
+            <option value="1">Table 1</option>
+            <option value="2">Table 2</option>
+            <option value="3">Table 3</option>
+            <option value="4">Table 4</option>
+            <option value="5">Table 5</option>
+            <option value="6">Table 6</option>
+            <option value="7">Table 7</option>
+            <option value="8">Table 8</option>
+            <option value="9">Table 9</option>
+            <option value="10">Table 10</option>
+            <option value="11">Table 11</option>
+            <option value="12">Table 12</option>
+            <option value="13">Table 13</option>
+            <option value="14">Table 14</option>
+            <option value="15">Table 15</option>
+            <option value="16">Table 16</option>
+          </select>
         </div>
         <div class="form-row">
           <div class="form-field" style="margin-bottom:0;">
@@ -235,21 +249,18 @@
         <button class="start-table-btn" onclick="startTable()" style="margin-top:16px;">▶ Start Table</button>
       </div>
 
-      <!-- Stage 2: Active tables (awaiting winner) -->
       <div id="active-tables-section" style="display:none;">
         <span class="section-label" id="active-tables-label">Active Tables (0)</span>
         <div id="active-tables-list"></div>
       </div>
 
-      <!-- Completed games log -->
       <div class="games-log" id="games-log" style="display:none;">
         <span class="section-label" id="games-count-label">Completed Games (0)</span>
         <div id="games-list"></div>
       </div>
 
-      <!-- Submit -->
       <div class="submit-section">
-        <div class="submit-summary" id="submit-summary">No games recorded yet. Start a table above, then record the winner when it finishes.</div>
+        <div class="submit-summary" id="submit-summary">No games completed yet. Start a table above, then record the winner when it finishes.</div>
         <button class="submit-btn" id="submit-btn" onclick="submitResults()">
           <div class="spinner"></div>
           <span class="btn-txt">Submit All Results</span>
@@ -276,9 +287,9 @@
 
   var currentEvent     = null;
   var allMembers       = [];
-  var checkedInPlayers = [];  // [{id, name}]
-  var activeTables     = [];  // [{id, tableNumber, players[], wallGame}] — in progress
-  var gamesLog         = [];  // [{id, tableNumber, players[], winner, wallGame}] — completed
+  var checkedInPlayers = [];
+  var activeTables     = [];
+  var gamesLog         = [];
 
   // ── PERSISTENCE ──────────────────────────────────────────────────
 
@@ -387,7 +398,6 @@
     document.getElementById('code-err').classList.remove('show');
   });
 
-  // Session hint on load
   (function() {
     var saved = getSavedState();
     if (!saved || !saved.eventData) return;
@@ -493,49 +503,63 @@
     document.getElementById('players-list').innerHTML = html;
   }
 
-  // ── RESULTS: STAGE 1 — START TABLE ───────────────────────────────
+  // ── RESULTS: START TABLE ──────────────────────────────────────────
+
+  function getActivePlayers() {
+    var list = [];
+    activeTables.forEach(function(t) { t.players.forEach(function(p) { list.push(p); }); });
+    return list;
+  }
 
   function refreshStartTableDropdowns() {
+    var activePlayers = getActivePlayers();
     var ids = ['st-p1','st-p2','st-p3','st-p4'];
     ids.forEach(function(id) {
       var sel = document.getElementById(id);
       var prev = sel ? sel.value : '';
       var opts = '<option value="">Select...</option>';
       checkedInPlayers.forEach(function(p) {
-        opts += '<option value="'+esc(p.name)+'">'+p.name+'</option>';
+        var busy = activePlayers.indexOf(p.name) !== -1;
+        opts += '<option value="'+esc(p.name)+'"'+(busy?' disabled style="color:#bbb;"':'')+'>'+p.name+(busy?' (at table)':'')+'</option>';
       });
-      if (sel) { sel.innerHTML = opts; if (prev) sel.value = prev; }
+      if (sel) { sel.innerHTML = opts; if (prev && activePlayers.indexOf(prev) === -1) sel.value = prev; }
     });
   }
 
   function startTable() {
-    var tableNum = document.getElementById('st-table').value.trim();
+    var tableNum = document.getElementById('st-table').value;
     var p1 = document.getElementById('st-p1').value;
     var p2 = document.getElementById('st-p2').value;
     var p3 = document.getElementById('st-p3').value;
     var p4 = document.getElementById('st-p4').value;
     var players = [p1,p2,p3,p4];
 
+    if (!tableNum) { showToast('Please select a table number'); return; }
     if (players.some(function(p){return !p;})) { showToast('Please select all 4 players'); return; }
     if (new Set(players).size < 4) { showToast('Each player can only appear once per table'); return; }
 
-    activeTables.push({ id: Date.now(), tableNumber: tableNum||'?', players: players, wallGame: false });
+    // Prevent same player at two active tables simultaneously
+    var activePlayers = getActivePlayers();
+    var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
+    if (conflict) { showToast(conflict + ' is already at an active table'); return; }
+
+    activeTables.push({ id: Date.now(), tableNumber: tableNum, players: players, wallGame: false });
     renderActiveTables();
     saveState();
 
-    // Clear player selects, keep table number
+    // Reset form
+    document.getElementById('st-table').value = '';
     ['st-p1','st-p2','st-p3','st-p4'].forEach(function(id) { document.getElementById(id).value = ''; });
     refreshStartTableDropdowns();
 
-    showToast('Table '+(tableNum||'?')+' started ✓', true);
+    showToast('Table '+tableNum+' started ✓', true);
   }
 
-  // ── RESULTS: STAGE 2 — ACTIVE TABLES ─────────────────────────────
+  // ── ACTIVE TABLES ─────────────────────────────────────────────────
 
   function renderActiveTables() {
     var section = document.getElementById('active-tables-section');
     var list    = document.getElementById('active-tables-list');
-
     if (!activeTables.length) { section.style.display = 'none'; return; }
     section.style.display = 'block';
     document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
@@ -544,22 +568,22 @@
     activeTables.forEach(function(t) {
       var winnerOpts = '<option value="">Select winner...</option>';
       t.players.forEach(function(p) { winnerOpts += '<option value="'+esc(p)+'">'+p+'</option>'; });
-
       html += '<div class="active-table-card" id="atc-'+t.id+'">';
       html += '<div class="active-table-header">';
       html += '<div class="active-table-num">🟡 Table '+t.tableNumber+' — In Progress</div>';
-      html += '<button class="cancel-table-btn" onclick="cancelTable('+t.id+')" title="Cancel table">✕</button>';
+      html += '<button class="cancel-table-btn" onclick="cancelTable('+t.id+')" title="Cancel">✕</button>';
       html += '</div>';
       html += '<div class="active-table-players">';
       t.players.forEach(function(p) { html += '<span>'+p+'</span>'; });
       html += '</div>';
       html += '<div class="winner-row">';
-      html += '<select class="winner-select" id="w-'+t.id+'"'+( t.wallGame ? ' disabled' : '')+'>'+winnerOpts+'</select>';
+      html += '<select class="winner-select" id="w-'+t.id+'"'+(t.wallGame?' disabled':'')+'>'+winnerOpts+'</select>';
       html += '<button class="wall-btn'+(t.wallGame?' active':'')+'" onclick="toggleWall('+t.id+')">'+(t.wallGame?'✓ Wall':'Wall Game')+'</button>';
       html += '<button class="record-btn" onclick="recordResult('+t.id+')">Record →</button>';
       html += '</div></div>';
     });
     list.innerHTML = html;
+    refreshStartTableDropdowns();
   }
 
   function toggleWall(tableId) {
@@ -573,18 +597,14 @@
   function recordResult(tableId) {
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
-
     var winner = '';
     if (!t.wallGame) {
       var sel = document.getElementById('w-'+tableId);
       winner = sel ? sel.value : '';
       if (!winner) { showToast('Select a winner or mark as Wall Game'); return; }
     }
-
-    // Move from active → completed
     gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner, wallGame: t.wallGame });
     activeTables = activeTables.filter(function(x){return x.id!==tableId;});
-
     renderActiveTables();
     renderGamesLog();
     saveState();
@@ -609,7 +629,6 @@
     }
     log.style.display = 'block';
     document.getElementById('games-count-label').textContent = 'Completed Games ('+gamesLog.length+')';
-
     var html = '';
     gamesLog.forEach(function(g, i) {
       html += '<div class="game-entry"><div class="game-entry-left">'+
@@ -623,7 +642,7 @@
     });
     document.getElementById('games-list').innerHTML = html;
     document.getElementById('submit-summary').textContent =
-      gamesLog.length+' game'+(gamesLog.length===1?'':' s')+' completed · '+
+      gamesLog.length+' game'+(gamesLog.length===1?'':'s')+' completed · '+
       checkedInPlayers.length+' player'+(checkedInPlayers.length===1?'':'s')+' checked in.';
   }
 
@@ -637,7 +656,6 @@
       showToast(activeTables.length+' table(s) still in progress — record or cancel them first');
       return;
     }
-
     var btn = document.getElementById('submit-btn');
     btn.disabled = true; btn.classList.add('loading');
 
