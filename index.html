@@ -116,7 +116,7 @@
     .submit-btn { width: 100%; padding: 15px; background: var(--green-dark); color: white; border: none; border-radius: 10px; font-family: var(--font); font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .submit-btn:hover { background: var(--green-mid); }
     .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
-    .submit-progress { font-size: 0.82rem; color: rgba(255,255,255,0.8); margin-top: 6px; text-align: center; display: none; }
+    .submit-progress { font-size: 0.82rem; color: var(--text-light); margin-top: 10px; text-align: center; display: none; }
 
     /* EMPTY */
     .empty-state { text-align: center; color: var(--text-light); padding: 48px 24px; font-size: 0.9rem; background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
@@ -254,7 +254,7 @@
         <div class="submit-summary" id="submit-summary">No games completed yet. Start a table above, then record the winner when it finishes.</div>
         <button class="submit-btn" id="submit-btn" onclick="submitResults()">
           <div class="spinner"></div>
-          <span class="btn-txt" id="submit-btn-txt">Submit All Results</span>
+          <span class="btn-txt">Submit All Results</span>
         </button>
         <div class="submit-progress" id="submit-progress"></div>
       </div>
@@ -345,7 +345,6 @@
   }
 
   function esc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-
   function delay(ms) { return new Promise(function(res) { setTimeout(res, ms); }); }
 
   // ── CODE VALIDATION ───────────────────────────────────────────────
@@ -425,14 +424,21 @@
   function loadMembers() {
     fetchSheet('Members').then(function(rows) {
       allMembers = rows
-        .filter(function(r) { var s = r['Membership Status']||''; return s==='Member'||s==='Guest'||s==='Active'; })
-        .map(function(r) { return {
-          id: r['Member ID']||'',
-          name: ((r['First Name']||'')+' '+(r['Last Name']||'')).trim(),
-          mpr: parseFloat(r['Published MPR'])||0,
-          status: r['Membership Status']||''
-        }; })
-        .filter(function(m) { return m.name.trim(); })
+        .filter(function(r) {
+          var s = (r['Membership Status'] || '').toString().trim();
+          return s === 'Member' || s === 'Guest' || s === 'Active';
+        })
+        .map(function(r) {
+          var firstName = (r['First Name'] || '').toString().trim();
+          var lastName  = (r['Last Name']  || '').toString().trim();
+          return {
+            id:     (r['Member ID'] || '').toString().trim(),
+            name:   (firstName + ' ' + lastName).trim(),
+            mpr:    parseFloat(r['Published MPR']) || 0,
+            status: (r['Membership Status'] || '').toString().trim()
+          };
+        })
+        .filter(function(m) { return m.id && m.name; })
         .sort(function(a,b) { return a.name.localeCompare(b.name); });
       renderMemberList();
       refreshStartTableDropdowns();
@@ -505,8 +511,32 @@
     return list;
   }
 
+  function getActiveTableNumbers() {
+    return activeTables.map(function(t) { return t.tableNumber; });
+  }
+
   function refreshStartTableDropdowns() {
-    var activePlayers = getActivePlayers();
+    var activePlayers     = getActivePlayers();
+    var activeTableNums   = getActiveTableNumbers();
+
+    // Grey out table numbers already in use
+    var tableSelect = document.getElementById('st-table');
+    if (tableSelect) {
+      var options = tableSelect.querySelectorAll('option');
+      options.forEach(function(opt) {
+        if (!opt.value) return;
+        var inUse = activeTableNums.indexOf(opt.value) !== -1;
+        opt.disabled = inUse;
+        opt.style.color = inUse ? '#bbb' : '';
+        opt.textContent = inUse ? 'Table ' + opt.value + ' (in progress)' : 'Table ' + opt.value;
+      });
+      // Reset selection if current value is now in use
+      if (tableSelect.value && activeTableNums.indexOf(tableSelect.value) !== -1) {
+        tableSelect.value = '';
+      }
+    }
+
+    // Grey out players already at active tables
     ['st-p1','st-p2','st-p3','st-p4'].forEach(function(id) {
       var sel = document.getElementById(id);
       var prev = sel ? sel.value : '';
@@ -528,9 +558,16 @@
     var players = [p1,p2,p3,p4];
 
     if (!tableNum) { showToast('Please select a table number'); return; }
+
+    // Prevent same table number being active twice
+    if (getActiveTableNumbers().indexOf(tableNum) !== -1) {
+      showToast('Table ' + tableNum + ' is already in progress'); return;
+    }
+
     if (players.some(function(p){return !p;})) { showToast('Please select all 4 players'); return; }
     if (new Set(players).size < 4) { showToast('Each player can only appear once per table'); return; }
 
+    // Prevent same player at two active tables
     var activePlayers = getActivePlayers();
     var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
     if (conflict) { showToast(conflict + ' is already at an active table'); return; }
@@ -658,35 +695,25 @@
     var total     = gamesLog.length;
     var index     = 0;
 
-    // Send each game one at a time with a 500ms gap
     function sendNextGame() {
       if (index >= total) {
-        // All games sent — wait 1s then fire the process trigger
         progress.textContent = 'Processing results...';
         return delay(1000).then(sendSubmitTrigger);
       }
-
       var g = gamesLog[index];
       progress.textContent = 'Sending game ' + (index + 1) + ' of ' + total + '...';
       index++;
-
       return fetch(ENDPOINT, {
         method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'gameResult',
-          eventId: eventId,
+          action: 'gameResult', eventId: eventId,
           tableNumber: g.tableNumber,
-          player1: g.players[0] || '',
-          player2: g.players[1] || '',
-          player3: g.players[2] || '',
-          player4: g.players[3] || '',
-          winner: g.winner || '',
-          wallGame: g.wallGame
+          player1: g.players[0]||'', player2: g.players[1]||'',
+          player3: g.players[2]||'', player4: g.players[3]||'',
+          winner: g.winner||'', wallGame: g.wallGame
         })
-      }).then(function() {
-        return delay(500); // 500ms gap between each game write
-      }).then(sendNextGame);
+      }).then(function() { return delay(500); }).then(sendNextGame);
     }
 
     function sendSubmitTrigger() {
@@ -694,11 +721,8 @@
         method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'submitResults',
-          eventId: eventId,
-          eventName: eventName,
-          gameCount: total,
-          checkedInCount: checkedInPlayers.length
+          action: 'submitResults', eventId: eventId, eventName: eventName,
+          gameCount: total, checkedInCount: checkedInPlayers.length
         })
       });
     }
@@ -708,7 +732,7 @@
       document.getElementById('screen-app').style.display     = 'none';
       document.getElementById('screen-success').style.display = 'flex';
       document.getElementById('success-sub').textContent =
-        total + ' game' + (total === 1 ? '' : 's') + ' submitted for ' + eventName + '. MPR ratings will be updated shortly.';
+        total+' game'+(total===1?'':'s')+' submitted for '+eventName+'. MPR ratings will be updated shortly.';
     }).catch(function() {
       btn.disabled = false;
       btn.classList.remove('loading');
