@@ -100,8 +100,12 @@
     .active-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: bold; }
     .active-table-players { margin-bottom: 12px; }
     .active-table-players span { display: inline-block; background: var(--green-light); border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 0.82rem; }
-    .winner-row { display: flex; gap: 8px; align-items: center; }
-    .winner-select { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
+    .winner-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .winner-select { flex: 1; min-width: 120px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
+    .points-input { width: 80px; padding: 10px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; text-align: center; flex-shrink: 0; }
+    .points-input:focus { border-color: var(--gold); }
+    .points-input::placeholder { color: var(--text-light); font-size: 0.8rem; }
+    .points-input:disabled { background: #f5f5f5; color: #bbb; }
     .wall-btn { padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--text-light); background: white; color: var(--text-light); font-family: var(--font); font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
     .wall-btn.active { background: var(--gold); color: white; border-color: var(--gold); }
     .record-btn { padding: 10px 16px; border-radius: 8px; border: none; background: var(--gold); color: var(--green-dark); font-family: var(--font); font-size: 0.88rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
@@ -114,6 +118,7 @@
     .game-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
     .game-players { font-size: 0.88rem; color: var(--text); line-height: 1.5; }
     .game-winner { font-size: 0.82rem; font-weight: bold; color: var(--green-mid); margin-top: 4px; }
+    .game-points-badge { display: inline-block; background: var(--green-light); border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; font-size: 0.75rem; color: var(--green-mid); font-weight: bold; margin-left: 6px; vertical-align: middle; }
     .game-wall-badge { font-size: 0.72rem; color: var(--text-light); font-style: italic; }
     .game-delete { background: none; border: none; color: #ccc; font-size: 1.1rem; cursor: pointer; padding: 2px 6px; flex-shrink: 0; }
 
@@ -143,7 +148,7 @@
     .loading .spinner { display: block; }
     .loading .btn-txt { opacity: 0.5; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } .winner-row { flex-wrap: wrap; } }
+    @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } .winner-row { flex-wrap: wrap; } .points-input { width: 70px; } }
   </style>
 </head>
 <body>
@@ -426,7 +431,6 @@
     if (input) { input.value = name; input.classList.remove('placeholder-mode'); input.classList.add('has-value'); }
     if (clear) clear.classList.add('visible');
     closeAllSD();
-    // Re-render other open dropdowns to reflect new selection
     SD_SLOTS.forEach(function(s) {
       var dd = document.getElementById('sd-dd-'+s);
       if (dd && dd.classList.contains('open')) renderSDList(s, document.getElementById('sd-search-'+s).value);
@@ -446,14 +450,12 @@
   }
 
   function refreshPlayerDropdowns() {
-    // Just re-render lists if any are open; dropdowns rebuild on open
     SD_SLOTS.forEach(function(s) {
       var dd = document.getElementById('sd-dd-'+s);
       if (dd && dd.classList.contains('open')) {
         renderSDList(s, document.getElementById('sd-search-'+s).value || '');
       }
     });
-    // Update table number dropdown
     refreshTableDropdown();
   }
 
@@ -472,7 +474,6 @@
     if (sel.value && activeTableNums.indexOf(sel.value) !== -1) sel.value = '';
   }
 
-  // Close dropdowns when clicking outside
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.sd-wrap')) closeAllSD();
   });
@@ -542,7 +543,6 @@
     updateCheckedInBadge();
     renderActiveTables();
     renderGamesLog();
-    // Build searchable dropdowns
     SD_SLOTS.forEach(function(s) { buildSearchableDropdown(s); });
     loadMembers();
   }
@@ -677,6 +677,7 @@
       t.players.forEach(function(p) { html += '<span>'+p+'</span>'; });
       html += '</div><div class="winner-row">'+
         '<select class="winner-select" id="w-'+t.id+'"'+(t.wallGame?' disabled':'')+'>'+winnerOpts+'</select>'+
+        '<input class="points-input" type="number" id="pts-'+t.id+'" placeholder="Pts" min="1"'+(t.wallGame?' disabled':'')+' inputmode="numeric">'+
         '<button class="wall-btn'+(t.wallGame?' active':'')+'" onclick="toggleWall('+t.id+')">'+(t.wallGame?'✓ Wall':'Wall Game')+'</button>'+
         '<button class="record-btn" onclick="recordResult('+t.id+')">Record →</button>'+
         '</div></div>';
@@ -695,13 +696,21 @@
   function recordResult(tableId) {
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
+
     var winner = '';
+    var points = 0;
+
     if (!t.wallGame) {
       var sel = document.getElementById('w-'+tableId);
       winner = sel ? sel.value : '';
       if (!winner) { showToast('Select a winner or mark as Wall Game'); return; }
+
+      var ptsEl = document.getElementById('pts-'+tableId);
+      points = ptsEl ? parseInt(ptsEl.value) : 0;
+      if (!points || points <= 0 || isNaN(points)) { showToast('Enter the points scored for the winning hand'); return; }
     }
-    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner, wallGame: t.wallGame });
+
+    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner, points: points, wallGame: t.wallGame });
     activeTables = activeTables.filter(function(x){return x.id!==tableId;});
     renderActiveTables(); renderGamesLog(); saveState();
     showToast('Table '+t.tableNumber+' recorded ✓', true);
@@ -726,7 +735,10 @@
       html += '<div class="game-entry"><div class="game-entry-left">'+
         '<div class="game-table-num">Table '+g.tableNumber+'</div>'+
         '<div class="game-players">'+g.players.join(' · ')+'</div>'+
-        (g.wallGame ? '<div class="game-wall-badge">Wall game</div>' : '<div class="game-winner">🏆 '+g.winner+'</div>')+
+        (g.wallGame
+          ? '<div class="game-wall-badge">Wall game</div>'
+          : '<div class="game-winner">🏆 '+g.winner+'<span class="game-points-badge">'+g.points+' pts</span></div>'
+        )+
         '</div><button class="game-delete" onclick="deleteGame('+i+')">✕</button></div>';
     });
     document.getElementById('games-list').innerHTML = html;
@@ -760,17 +772,31 @@
       index++;
       return fetch(ENDPOINT, {
         method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'gameResult', eventId:eventId, tableNumber:g.tableNumber,
-          player1:g.players[0]||'', player2:g.players[1]||'', player3:g.players[2]||'', player4:g.players[3]||'',
-          winner:g.winner||'', wallGame:g.wallGame })
+        body: JSON.stringify({
+          action: 'gameResult',
+          eventId: eventId,
+          tableNumber: g.tableNumber,
+          player1: g.players[0]||'',
+          player2: g.players[1]||'',
+          player3: g.players[2]||'',
+          player4: g.players[3]||'',
+          winner: g.winner||'',
+          points: g.points||0,
+          wallGame: g.wallGame
+        })
       }).then(function() { return delay(500); }).then(sendNextGame);
     }
 
     function sendSubmitTrigger() {
       return fetch(ENDPOINT, {
         method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'submitResults', eventId:eventId, eventName:eventName,
-          gameCount:total, checkedInCount:checkedInPlayers.length })
+        body: JSON.stringify({
+          action: 'submitResults',
+          eventId: eventId,
+          eventName: eventName,
+          gameCount: total,
+          checkedInCount: checkedInPlayers.length
+        })
       });
     }
 
