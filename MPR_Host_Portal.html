@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MPR Host Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --green-dark: #1A4D42; --green-mid: #2E6B5E; --green-light: #F0F7F4;
+      --gold: #C9A34A; --gold-dark: #b8922f;
+      --text: #2D2D2D; --text-light: #888; --border: #D0E8E0;
+      --font: 'Georgia', serif;
+    }
+    body { font-family: var(--font); background: var(--green-light); color: var(--text); min-height: 100vh; }
+
+    /* CODE ENTRY */
+    #screen-code { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; background: var(--green-dark); }
+    .code-title { font-size: 1.8rem; font-weight: bold; color: var(--gold); margin-bottom: 8px; text-align: center; }
+    .code-sub { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 40px; text-align: center; }
+    .code-box { background: white; border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .code-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; display: block; }
+    .code-input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 10px; font-family: var(--font); font-size: 1.6rem; color: var(--text); outline: none; letter-spacing: 6px; text-align: center; margin-bottom: 16px; transition: border-color 0.2s; }
+    .code-input:focus { border-color: var(--green-dark); }
+    .code-input.error { border-color: #B94040; }
+    .code-btn { width: 100%; padding: 15px; background: var(--green-dark); color: white; border: none; border-radius: 10px; font-family: var(--font); font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .code-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .code-err { font-size: 0.82rem; color: #B94040; text-align: center; margin-top: 12px; display: none; }
+    .code-err.show { display: block; }
+    .session-banner { margin-top: 20px; background: rgba(201,163,74,0.15); border: 1px solid rgba(201,163,74,0.4); border-radius: 10px; padding: 14px 18px; text-align: center; max-width: 400px; width: 100%; }
+    .session-banner-title { color: var(--gold); font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; }
+    .session-banner-sub { color: rgba(255,255,255,0.7); font-size: 0.8rem; line-height: 1.5; }
+
+    /* MAIN APP */
+    #screen-app { display: none; flex-direction: column; min-height: 100vh; }
+    .app-header { background: var(--green-dark); padding: 20px 20px 0; position: sticky; top: 0; z-index: 100; }
+    .app-header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+    .app-event-name { font-size: 1.2rem; font-weight: bold; color: var(--gold); line-height: 1.3; flex: 1; }
+    .app-event-meta { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 4px; }
+    .app-checkin-badge { background: rgba(201,163,74,0.15); border: 1px solid rgba(201,163,74,0.4); border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; color: var(--gold); white-space: nowrap; margin-left: 12px; flex-shrink: 0; }
+    .app-tabs { display: flex; }
+    .app-tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 0.78rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; user-select: none; }
+    .app-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .app-body { flex: 1; padding: 24px 16px 80px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* SEARCH BAR */
+    .search-bar { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-family: var(--font); font-size: 0.95rem; color: var(--text); background: white; margin-bottom: 16px; outline: none; }
+    .section-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 12px; display: block; }
+
+    /* MEMBER LIST */
+    .member-list { display: flex; flex-direction: column; gap: 8px; }
+    .member-row { background: white; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .member-row.checked-in { background: #eef7f3; border-left: 4px solid var(--green-mid); }
+    .member-info { flex: 1; }
+    .member-name { font-size: 1rem; font-weight: bold; color: var(--text); margin-bottom: 2px; }
+    .member-sub { font-size: 0.78rem; color: var(--text-light); }
+    .checkin-btn { padding: 8px 20px; border-radius: 8px; border: none; font-family: var(--font); font-size: 0.85rem; font-weight: bold; cursor: pointer; min-width: 90px; text-align: center; }
+    .checkin-btn.not-in { background: var(--green-dark); color: white; }
+    .checkin-btn.is-in { background: #eef7f3; color: var(--green-mid); border: 1.5px solid var(--green-mid); }
+
+    /* PLAYERS */
+    .player-chip { background: white; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 8px; }
+    .player-num { width: 28px; height: 28px; border-radius: 50%; background: var(--green-dark); color: white; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .player-chip-name { font-size: 0.95rem; font-weight: bold; flex: 1; }
+    .player-chip-mpr { font-size: 0.78rem; color: var(--text-light); }
+
+    /* RESULTS */
+    .start-table-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .start-table-title { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 16px; font-weight: bold; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-field { margin-bottom: 12px; position: relative; }
+    .form-label { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; display: block; }
+    .form-select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
+    .start-table-btn { width: 100%; padding: 13px; background: var(--green-dark); color: white; border: none; border-radius: 8px; font-family: var(--font); font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-top: 4px; }
+
+    /* SEARCHABLE DROPDOWN */
+    .sd-wrap { position: relative; }
+    .sd-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; cursor: pointer; }
+    .sd-input:focus { border-color: var(--green-mid); }
+    .sd-input.has-value { color: var(--text); }
+    .sd-input.placeholder-mode { color: var(--text-light); }
+    .sd-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 500; max-height: 220px; overflow: hidden; flex-direction: column; }
+    .sd-dropdown.open { display: flex; }
+    .sd-search { width: 100%; padding: 9px 12px; border: none; border-bottom: 1px solid var(--border); font-family: var(--font); font-size: 0.88rem; color: var(--text); outline: none; background: #fafafa; }
+    .sd-list { overflow-y: auto; flex: 1; }
+    .sd-option { padding: 10px 12px; font-size: 0.9rem; cursor: pointer; color: var(--text); transition: background 0.1s; }
+    .sd-option:hover { background: var(--green-light); }
+    .sd-option.disabled { color: #bbb; cursor: default; font-style: italic; }
+    .sd-option.disabled:hover { background: white; }
+    .sd-option.selected { background: #eef7f3; color: var(--green-mid); font-weight: bold; }
+    .sd-empty { padding: 12px; font-size: 0.85rem; color: var(--text-light); text-align: center; }
+    .sd-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #bbb; font-size: 1rem; cursor: pointer; display: none; line-height: 1; padding: 2px 4px; }
+    .sd-clear.visible { display: block; }
+
+    /* ACTIVE TABLES */
+    .active-table-card { background: white; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--gold); }
+    .active-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .active-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: bold; }
+    .cancel-table-btn { background: none; border: none; color: #ccc; font-size: 1rem; cursor: pointer; padding: 2px 6px; }
+
+    /* SCORECARD-STYLE PLAYER ROWS */
+    .score-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .score-row { display: flex; align-items: center; gap: 10px; background: var(--green-light); border-radius: 8px; padding: 10px 12px; }
+    .score-row.wall-mode { opacity: 0.4; pointer-events: none; }
+    .score-row-num { width: 22px; height: 22px; border-radius: 50%; background: var(--green-dark); color: white; font-size: 0.72rem; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .score-row-name { flex: 1; font-size: 0.9rem; font-weight: bold; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .score-pts-input { width: 72px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--font); font-size: 0.95rem; color: var(--text); background: white; outline: none; text-align: center; flex-shrink: 0; transition: border-color 0.15s; }
+    .score-pts-input:focus { border-color: var(--gold); }
+    .score-pts-input::placeholder { color: #ccc; font-size: 0.8rem; }
+    .score-pts-input.winner-highlight { border-color: var(--green-mid); background: #eef7f3; font-weight: bold; }
+    .score-pts-label { font-size: 0.7rem; color: var(--text-light); flex-shrink: 0; }
+
+    /* TABLE FOOTER ACTIONS */
+    .table-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .wall-btn { padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--text-light); background: white; color: var(--text-light); font-family: var(--font); font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
+    .wall-btn.active { background: var(--gold); color: white; border-color: var(--gold); }
+    .record-btn { flex: 1; padding: 10px 16px; border-radius: 8px; border: none; background: var(--gold); color: var(--green-dark); font-family: var(--font); font-size: 0.88rem; font-weight: bold; cursor: pointer; white-space: nowrap; text-align: center; }
+
+    /* GAMES LOG */
+    .games-log { margin-bottom: 20px; }
+    .game-entry { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-left: 4px solid var(--green-mid); }
+    .game-entry-left { flex: 1; }
+    .game-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 4px; }
+    .game-players { font-size: 0.88rem; color: var(--text); line-height: 1.5; }
+    .game-winner { font-size: 0.82rem; font-weight: bold; color: var(--green-mid); margin-top: 4px; }
+    .game-points-badge { display: inline-block; background: var(--green-light); border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; font-size: 0.75rem; color: var(--green-mid); font-weight: bold; margin-left: 6px; vertical-align: middle; }
+    .game-wall-badge { font-size: 0.72rem; color: var(--text-light); font-style: italic; }
+    .game-delete { background: none; border: none; color: #ccc; font-size: 1.1rem; cursor: pointer; padding: 2px 6px; flex-shrink: 0; }
+
+    /* SUBMIT */
+    .submit-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .submit-summary { font-size: 0.88rem; color: var(--text-light); margin-bottom: 16px; line-height: 1.6; }
+    .submit-btn { width: 100%; padding: 15px; background: var(--green-dark); color: white; border: none; border-radius: 10px; font-family: var(--font); font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .submit-progress { font-size: 0.82rem; color: var(--text-light); margin-top: 10px; text-align: center; display: none; }
+
+    /* EMPTY */
+    .empty-state { text-align: center; color: var(--text-light); padding: 48px 24px; font-size: 0.9rem; background: white; border-radius: 12px; }
+    .empty-icon { font-size: 2rem; margin-bottom: 12px; }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green-dark); color: white; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; box-shadow: 0 4px 16px rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.3s, transform 0.3s; z-index: 9999; pointer-events: none; white-space: nowrap; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.gold { background: var(--gold); color: var(--green-dark); }
+
+    /* SUCCESS */
+    #screen-success { display: none; min-height: 100vh; background: var(--green-dark); align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 40px 24px; }
+    .success-icon { font-size: 4rem; margin-bottom: 24px; }
+    .success-title { font-size: 1.8rem; font-weight: bold; color: var(--gold); margin-bottom: 12px; }
+    .success-sub { font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.7; max-width: 320px; }
+
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
+    .loading .spinner { display: block; }
+    .loading .btn-txt { opacity: 0.5; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } .table-actions { flex-wrap: wrap; } .score-pts-input { width: 64px; } }
+  </style>
+</head>
+<body>
+
+<!-- CODE ENTRY -->
+<div id="screen-code">
+  <div class="code-title">MPR Host Portal</div>
+  <div class="code-sub" id="code-sub">Enter your 6-digit event access code</div>
+  <div class="code-box">
+    <label class="code-label">Access Code</label>
+    <input class="code-input" id="code-input" type="text" placeholder="000000" autocomplete="off" maxlength="6" inputmode="numeric">
+    <button class="code-btn" id="code-btn" onclick="validateCode()">
+      <div class="spinner"></div>
+      <span class="btn-txt">Enter Portal →</span>
+    </button>
+    <div class="code-err" id="code-err">Code not found. Please check and try again.</div>
+  </div>
+  <div class="session-banner" id="session-banner" style="display:none;">
+    <div class="session-banner-title">⚡ Previous Session Found</div>
+    <div class="session-banner-sub" id="session-banner-sub"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-app" style="display:none; flex-direction:column; min-height:100vh;">
+  <div class="app-header">
+    <div class="app-header-top">
+      <div>
+        <div class="app-event-name" id="app-event-name">Loading...</div>
+        <div class="app-event-meta" id="app-event-meta"></div>
+      </div>
+      <div class="app-checkin-badge" id="app-checkin-badge">0 checked in</div>
+    </div>
+    <div class="app-tabs">
+      <div class="app-tab active" onclick="showPanel('checkin')">Check In</div>
+      <div class="app-tab" onclick="showPanel('players')">Players</div>
+      <div class="app-tab" onclick="showPanel('results')">Results</div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="panel active" id="panel-checkin">
+      <input type="text" class="search-bar" id="checkin-search" placeholder="Search by name..." oninput="renderMemberList()">
+      <span class="section-label" id="member-count-label">All Members</span>
+      <div class="member-list" id="member-list">
+        <div class="empty-state"><div class="empty-icon">⏳</div>Loading members...</div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-players">
+      <span class="section-label" id="players-count-label">Checked In (0)</span>
+      <div id="players-list">
+        <div class="empty-state"><div class="empty-icon">👥</div>No one checked in yet.</div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-results">
+      <div class="start-table-form">
+        <div class="start-table-title">Start a Table</div>
+        <div class="form-field">
+          <label class="form-label">Table Number</label>
+          <select class="form-select" id="st-table">
+            <option value="">Select #...</option>
+            <option value="1">Table 1</option><option value="2">Table 2</option>
+            <option value="3">Table 3</option><option value="4">Table 4</option>
+            <option value="5">Table 5</option><option value="6">Table 6</option>
+            <option value="7">Table 7</option><option value="8">Table 8</option>
+            <option value="9">Table 9</option><option value="10">Table 10</option>
+            <option value="11">Table 11</option><option value="12">Table 12</option>
+            <option value="13">Table 13</option><option value="14">Table 14</option>
+            <option value="15">Table 15</option><option value="16">Table 16</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Player 1</label>
+            <div class="sd-wrap" id="sd-wrap-p1"></div>
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Player 2</label>
+            <div class="sd-wrap" id="sd-wrap-p2"></div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Player 3</label>
+            <div class="sd-wrap" id="sd-wrap-p3"></div>
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Player 4</label>
+            <div class="sd-wrap" id="sd-wrap-p4"></div>
+          </div>
+        </div>
+        <button class="start-table-btn" onclick="startTable()" style="margin-top:16px;">▶ Start Table</button>
+      </div>
+
+      <div id="active-tables-section" style="display:none;">
+        <span class="section-label" id="active-tables-label">Active Tables (0)</span>
+        <div id="active-tables-list"></div>
+      </div>
+
+      <div class="games-log" id="games-log" style="display:none;">
+        <span class="section-label" id="games-count-label">Completed Games (0)</span>
+        <div id="games-list"></div>
+      </div>
+
+      <div class="submit-section">
+        <div class="submit-summary" id="submit-summary">No games completed yet. Start a table above, then record the winner when it finishes.</div>
+        <button class="submit-btn" id="submit-btn" onclick="submitResults()">
+          <div class="spinner"></div>
+          <span class="btn-txt">Submit All Results</span>
+        </button>
+        <div class="submit-progress" id="submit-progress"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-success" style="display:none; flex-direction:column;">
+  <div class="success-icon">✅</div>
+  <div class="success-title">Results Submitted</div>
+  <div class="success-sub" id="success-sub">All results have been recorded.</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  var SHEET_ID    = '17mrQewoVdPRMlvzqTdA_d7-XmxRnYvEuhyoT0q9uPfw';
+  var ENDPOINT    = 'https://script.google.com/macros/s/AKfycbyd5Pw5U_UubqprHfWP-NhZ-yVMH0YlDfWfH4WMNshn2Rg-PiQVQH3NjPsBR-UBH-Wr/exec';
+  var STORAGE_KEY = 'mpr_host_session';
+
+  var currentEvent     = null;
+  var allMembers       = [];
+  var checkedInPlayers = [];
+  var activeTables     = [];
+  var gamesLog         = [];
+
+  var sdState = { p1: '', p2: '', p3: '', p4: '' };
+
+  // ── PERSISTENCE ──────────────────────────────────────────────────
+
+  function saveState() {
+    if (!currentEvent) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      eventId: currentEvent['Event ID'], eventData: currentEvent,
+      checkedInPlayers: checkedInPlayers, activeTables: activeTables, gamesLog: gamesLog
+    }));
+  }
+  function clearState() { localStorage.removeItem(STORAGE_KEY); }
+  function getSavedState() {
+    try { var r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+  }
+
+  // ── UTILITIES ────────────────────────────────────────────────────
+
+  function showToast(msg, isGold) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show' + (isGold ? ' gold' : '');
+    clearTimeout(window._tt);
+    window._tt = setTimeout(function() { t.className = ''; }, 2800);
+  }
+
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.app-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('panel-' + name).classList.add('active');
+    document.querySelectorAll('.app-tab')[{checkin:0,players:1,results:2}[name]].classList.add('active');
+    if (name === 'players') renderPlayersList();
+    if (name === 'results') refreshPlayerDropdowns();
+  }
+
+  function fetchSheet(tab) {
+    var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tab) + '&_=' + Date.now();
+    return fetch(url).then(function(r) { return r.text(); }).then(function(text) {
+      var json = JSON.parse(text.substring(47, text.length - 2));
+      var cols = json.table.cols.map(function(c) { return c.label; });
+      return json.table.rows.map(function(row) {
+        var obj = {};
+        row.c.forEach(function(cell, i) { obj[cols[i]] = cell ? cell.v : ''; });
+        return obj;
+      });
+    });
+  }
+
+  function parseDate(raw) {
+    if (!raw) return '';
+    try {
+      var m = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
+      if (m) return new Date(+m[1], +m[2], +m[3]).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+    } catch(e) {}
+    return String(raw);
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function delay(ms) { return new Promise(function(res) { setTimeout(res, ms); }); }
+
+  // ── SEARCHABLE DROPDOWN ───────────────────────────────────────────
+
+  var SD_SLOTS = ['p1','p2','p3','p4'];
+
+  function buildSearchableDropdown(slot) {
+    var wrapId = 'sd-wrap-' + slot;
+    var wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+
+    wrap.innerHTML =
+      '<input class="sd-input placeholder-mode" id="sd-input-'+slot+'" placeholder="Select..." readonly>' +
+      '<button class="sd-clear" id="sd-clear-'+slot+'" onclick="clearSD(\''+slot+'\')" tabindex="-1">✕</button>' +
+      '<div class="sd-dropdown" id="sd-dd-'+slot+'">' +
+        '<input class="sd-search" id="sd-search-'+slot+'" placeholder="Type to search..." autocomplete="off">' +
+        '<div class="sd-list" id="sd-list-'+slot+'"></div>' +
+      '</div>';
+
+    var input  = document.getElementById('sd-input-'+slot);
+    var search = document.getElementById('sd-search-'+slot);
+
+    input.addEventListener('click', function() { openSD(slot); });
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') openSD(slot); });
+    search.addEventListener('input', function() { renderSDList(slot, this.value); });
+    search.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAllSD(); });
+  }
+
+  function openSD(slot) {
+    closeAllSD();
+    var dd = document.getElementById('sd-dd-'+slot);
+    var search = document.getElementById('sd-search-'+slot);
+    if (!dd) return;
+    dd.classList.add('open');
+    renderSDList(slot, '');
+    search.value = '';
+    setTimeout(function() { search.focus(); }, 50);
+  }
+
+  function closeAllSD() {
+    SD_SLOTS.forEach(function(s) {
+      var dd = document.getElementById('sd-dd-'+s);
+      if (dd) dd.classList.remove('open');
+    });
+  }
+
+  function renderSDList(slot, query) {
+    var listEl = document.getElementById('sd-list-'+slot);
+    if (!listEl) return;
+    var activePlayers = getActivePlayers();
+    var otherSelected = SD_SLOTS.filter(function(s) { return s !== slot; }).map(function(s) { return sdState[s]; }).filter(Boolean);
+    var q = query.toLowerCase().trim();
+
+    var filtered = checkedInPlayers.filter(function(p) {
+      return !q || p.name.toLowerCase().indexOf(q) !== -1;
+    });
+
+    if (!filtered.length) {
+      listEl.innerHTML = '<div class="sd-empty">No players found</div>';
+      return;
+    }
+
+    var html = '';
+    filtered.forEach(function(p) {
+      var busyActive  = activePlayers.indexOf(p.name) !== -1;
+      var busySlot    = otherSelected.indexOf(p.name) !== -1;
+      var disabled    = busyActive || busySlot;
+      var isSelected  = sdState[slot] === p.name;
+      var label       = p.name + (busyActive ? ' (at table)' : busySlot ? ' (already selected)' : '');
+      var cls         = 'sd-option' + (disabled ? ' disabled' : '') + (isSelected ? ' selected' : '');
+      var onclick     = disabled ? '' : 'onclick="selectSD(\''+slot+'\',\''+esc(p.name)+'\')"';
+      html += '<div class="'+cls+'" '+onclick+'>'+label+'</div>';
+    });
+    listEl.innerHTML = html;
+  }
+
+  function selectSD(slot, name) {
+    sdState[slot] = name;
+    var input = document.getElementById('sd-input-'+slot);
+    var clear = document.getElementById('sd-clear-'+slot);
+    if (input) { input.value = name; input.classList.remove('placeholder-mode'); input.classList.add('has-value'); }
+    if (clear) clear.classList.add('visible');
+    closeAllSD();
+    SD_SLOTS.forEach(function(s) {
+      var dd = document.getElementById('sd-dd-'+s);
+      if (dd && dd.classList.contains('open')) renderSDList(s, document.getElementById('sd-search-'+s).value);
+    });
+  }
+
+  function clearSD(slot) {
+    sdState[slot] = '';
+    var input = document.getElementById('sd-input-'+slot);
+    var clear = document.getElementById('sd-clear-'+slot);
+    if (input) { input.value = ''; input.classList.add('placeholder-mode'); input.classList.remove('has-value'); }
+    if (clear) clear.classList.remove('visible');
+  }
+
+  function clearAllSD() { SD_SLOTS.forEach(function(s) { clearSD(s); }); }
+
+  function refreshPlayerDropdowns() {
+    SD_SLOTS.forEach(function(s) {
+      var dd = document.getElementById('sd-dd-'+s);
+      if (dd && dd.classList.contains('open')) {
+        renderSDList(s, document.getElementById('sd-search-'+s).value || '');
+      }
+    });
+    refreshTableDropdown();
+  }
+
+  function refreshTableDropdown() {
+    var activeTableNums = getActiveTableNumbers();
+    var sel = document.getElementById('st-table');
+    if (!sel) return;
+    var options = sel.querySelectorAll('option');
+    options.forEach(function(opt) {
+      if (!opt.value) return;
+      var inUse = activeTableNums.indexOf(opt.value) !== -1;
+      opt.disabled = inUse;
+      opt.style.color = inUse ? '#bbb' : '';
+      opt.textContent = inUse ? 'Table ' + opt.value + ' (in progress)' : 'Table ' + opt.value;
+    });
+    if (sel.value && activeTableNums.indexOf(sel.value) !== -1) sel.value = '';
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.sd-wrap')) closeAllSD();
+  });
+
+  // ── CODE VALIDATION ───────────────────────────────────────────────
+
+  function validateCode() {
+    var code = document.getElementById('code-input').value.trim();
+    if (!code) { document.getElementById('code-input').classList.add('error'); return; }
+    var btn = document.getElementById('code-btn');
+    btn.disabled = true; btn.classList.add('loading');
+    fetchSheet('Events').then(function(rows) {
+      var match = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (String(rows[i]['Host Code'] || '').trim() === code) { match = rows[i]; break; }
+      }
+      if (!match) {
+        document.getElementById('code-input').classList.add('error');
+        document.getElementById('code-err').classList.add('show');
+        btn.disabled = false; btn.classList.remove('loading');
+        return;
+      }
+      var saved = getSavedState();
+      if (saved && String(saved.eventId) === String(match['Event ID'])) {
+        currentEvent = match;
+        checkedInPlayers = saved.checkedInPlayers || [];
+        activeTables     = saved.activeTables     || [];
+        gamesLog         = saved.gamesLog         || [];
+        showToast('Session restored — ' + checkedInPlayers.length + ' checked in, ' + gamesLog.length + ' games completed', true);
+      } else {
+        clearState();
+        currentEvent = match; checkedInPlayers = []; activeTables = []; gamesLog = [];
+      }
+      launchApp();
+    }).catch(function() {
+      document.getElementById('code-err').textContent = 'Connection error. Please try again.';
+      document.getElementById('code-err').classList.add('show');
+      btn.disabled = false; btn.classList.remove('loading');
+    });
+  }
+
+  document.getElementById('code-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') validateCode();
+    this.classList.remove('error');
+    document.getElementById('code-err').classList.remove('show');
+  });
+
+  (function() {
+    var saved = getSavedState();
+    if (!saved || !saved.eventData) return;
+    document.getElementById('session-banner').style.display = 'block';
+    document.getElementById('session-banner-sub').textContent =
+      (saved.eventData['Event Name'] || saved.eventId) + ' · ' +
+      (saved.checkedInPlayers||[]).length + ' checked in · ' +
+      (saved.gamesLog||[]).length + ' games completed\nEnter your code to resume.';
+    document.getElementById('code-sub').textContent = 'Enter your code to resume your session';
+  })();
+
+  // ── APP LAUNCH ────────────────────────────────────────────────────
+
+  function launchApp() {
+    document.getElementById('app-event-name').textContent = currentEvent['Event Name'] || 'Event';
+    document.getElementById('app-event-meta').textContent =
+      parseDate(currentEvent['Event Date']) + (currentEvent['City'] ? ' · ' + currentEvent['City'] : '');
+    document.getElementById('screen-code').style.display = 'none';
+    document.getElementById('screen-app').style.display  = 'flex';
+    updateCheckedInBadge();
+    renderActiveTables();
+    renderGamesLog();
+    SD_SLOTS.forEach(function(s) { buildSearchableDropdown(s); });
+    loadMembers();
+  }
+
+  function updateCheckedInBadge() {
+    document.getElementById('app-checkin-badge').textContent = checkedInPlayers.length + ' checked in';
+  }
+
+  function loadMembers() {
+    fetchSheet('Members').then(function(rows) {
+      allMembers = rows
+        .filter(function(r) { var s = (r['Membership Status']||'').toString().trim(); return s==='Member'||s==='Guest'||s==='Active'; })
+        .map(function(r) { return {
+          id: (r['Member ID']||'').toString().trim(),
+          name: ((r['First Name']||'').toString().trim() + ' ' + (r['Last Name']||'').toString().trim()).trim(),
+          mpr: parseFloat(r['Published MPR'])||0,
+          status: (r['Membership Status']||'').toString().trim()
+        }; })
+        .filter(function(m) { return m.id && m.name; })
+        .sort(function(a,b) { return a.name.localeCompare(b.name); });
+      renderMemberList();
+    });
+  }
+
+  // ── CHECK IN ──────────────────────────────────────────────────────
+
+  function isCheckedIn(id) { return checkedInPlayers.some(function(p) { return String(p.id)===String(id); }); }
+
+  function renderMemberList() {
+    var q = (document.getElementById('checkin-search').value||'').toLowerCase().trim();
+    var filtered = allMembers.filter(function(m) { return !q || m.name.toLowerCase().indexOf(q)!==-1; });
+    document.getElementById('member-count-label').textContent = q ? 'Results ('+filtered.length+')' : 'All Members ('+allMembers.length+')';
+    if (!filtered.length) {
+      document.getElementById('member-list').innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>No members found.</div>';
+      return;
+    }
+    var html = '';
+    filtered.forEach(function(m) {
+      var ci = isCheckedIn(m.id);
+      html += '<div class="member-row'+(ci?' checked-in':'')+'">'+
+        '<div class="member-info"><div class="member-name">'+m.name+'</div>'+
+        '<div class="member-sub">MPR '+(m.mpr?m.mpr.toFixed(2):'--')+' · '+m.status+'</div></div>'+
+        (ci
+          ? '<button class="checkin-btn is-in" onclick="uncheckIn(\''+esc(m.id)+'\')">✓ Undo</button>'
+          : '<button class="checkin-btn not-in" onclick="checkIn(\''+esc(m.id)+'\',\''+esc(m.name)+'\')">Check In</button>'
+        )+'</div>';
+    });
+    document.getElementById('member-list').innerHTML = html;
+  }
+
+  function checkIn(id, name) {
+    if (isCheckedIn(id)) return;
+    checkedInPlayers.push({id:id, name:name});
+    updateCheckedInBadge(); renderMemberList(); saveState();
+    showToast(name + ' checked in ✓', true);
+  }
+
+  function uncheckIn(id) {
+    var name = '';
+    checkedInPlayers = checkedInPlayers.filter(function(p) { if(String(p.id)===String(id)){name=p.name;return false;} return true; });
+    updateCheckedInBadge(); renderMemberList(); saveState();
+    showToast((name||'Player') + ' removed');
+  }
+
+  // ── PLAYERS LIST ──────────────────────────────────────────────────
+
+  function renderPlayersList() {
+    document.getElementById('players-count-label').textContent = 'Checked In ('+checkedInPlayers.length+')';
+    if (!checkedInPlayers.length) {
+      document.getElementById('players-list').innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div>No one checked in yet.</div>';
+      return;
+    }
+    var html = '';
+    checkedInPlayers.forEach(function(p, i) {
+      var m = allMembers.find(function(x) { return String(x.id)===String(p.id); });
+      html += '<div class="player-chip"><div class="player-num">'+(i+1)+'</div>'+
+        '<div class="player-chip-name">'+p.name+'</div>'+
+        '<div class="player-chip-mpr">MPR '+(m?m.mpr.toFixed(2):'--')+'</div></div>';
+    });
+    document.getElementById('players-list').innerHTML = html;
+  }
+
+  // ── RESULTS ───────────────────────────────────────────────────────
+
+  function getActivePlayers() {
+    var list = [];
+    activeTables.forEach(function(t) { t.players.forEach(function(p) { list.push(p); }); });
+    return list;
+  }
+
+  function getActiveTableNumbers() {
+    return activeTables.map(function(t) { return t.tableNumber; });
+  }
+
+  function startTable() {
+    var tableNum = document.getElementById('st-table').value;
+    var players  = [sdState.p1, sdState.p2, sdState.p3, sdState.p4];
+
+    if (!tableNum) { showToast('Please select a table number'); return; }
+    if (getActiveTableNumbers().indexOf(tableNum) !== -1) { showToast('Table '+tableNum+' is already in progress'); return; }
+    if (players.some(function(p){return !p;})) { showToast('Please select all 4 players'); return; }
+    if (new Set(players).size < 4) { showToast('Each player can only appear once per table'); return; }
+    var activePlayers = getActivePlayers();
+    var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
+    if (conflict) { showToast(conflict + ' is already at an active table'); return; }
+
+    activeTables.push({ id: Date.now(), tableNumber: tableNum, players: players, wallGame: false });
+    renderActiveTables();
+    saveState();
+    document.getElementById('st-table').value = '';
+    clearAllSD();
+    refreshTableDropdown();
+    showToast('Table '+tableNum+' started ✓', true);
+  }
+
+  // ── ACTIVE TABLES — SCORECARD STYLE ───────────────────────────────
+
+  function renderActiveTables() {
+    var section = document.getElementById('active-tables-section');
+    var list    = document.getElementById('active-tables-list');
+    if (!activeTables.length) { section.style.display = 'none'; refreshTableDropdown(); return; }
+    section.style.display = 'block';
+    document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
+
+    var html = '';
+    activeTables.forEach(function(t) {
+      var wallMode = t.wallGame;
+      html += '<div class="active-table-card">'+
+        '<div class="active-table-header">'+
+          '<div class="active-table-num">🟡 Table '+t.tableNumber+' — In Progress</div>'+
+          '<button class="cancel-table-btn" onclick="cancelTable('+t.id+')">✕</button>'+
+        '</div>'+
+        '<div class="score-grid">';
+
+      // One row per player — name + points input
+      t.players.forEach(function(playerName, idx) {
+        html +=
+          '<div class="score-row'+(wallMode?' wall-mode':'')+'" id="score-row-'+t.id+'-'+idx+'">'+
+            '<div class="score-row-num">'+(idx+1)+'</div>'+
+            '<div class="score-row-name">'+esc(playerName)+'</div>'+
+            '<input class="score-pts-input" '+
+              'id="pts-'+t.id+'-'+idx+'" '+
+              'type="number" '+
+              'placeholder="Pts" '+
+              'min="1" '+
+              'inputmode="numeric" '+
+              (wallMode ? 'disabled ' : '')+
+              'oninput="highlightWinner('+t.id+')"'+
+            '>'+
+            '<span class="score-pts-label">pts</span>'+
+          '</div>';
+      });
+
+      html += '</div>'+  // end score-grid
+        '<div class="table-actions">'+
+          '<button class="wall-btn'+(wallMode?' active':'')+'" onclick="toggleWall('+t.id+')">'+(wallMode?'✓ Wall Game':'Wall Game')+'</button>'+
+          '<button class="record-btn" onclick="recordResult('+t.id+')">Record →</button>'+
+        '</div>'+
+      '</div>';
+    });
+
+    list.innerHTML = html;
+    refreshTableDropdown();
+  }
+
+  // Highlight the row with points entered (the winner)
+  function highlightWinner(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    t.players.forEach(function(_, idx) {
+      var input = document.getElementById('pts-'+tableId+'-'+idx);
+      if (!input) return;
+      var val = parseInt(input.value);
+      if (val > 0) {
+        input.classList.add('winner-highlight');
+      } else {
+        input.classList.remove('winner-highlight');
+      }
+    });
+  }
+
+  function toggleWall(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    t.wallGame = !t.wallGame;
+    renderActiveTables(); saveState();
+  }
+
+  // Determine winner from whichever player has points entered
+  function recordResult(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+
+    if (t.wallGame) {
+      // Wall game — no winner, no points needed
+      gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: '', points: 0, wallGame: true });
+      activeTables = activeTables.filter(function(x){return x.id!==tableId;});
+      renderActiveTables(); renderGamesLog(); saveState();
+      showToast('Table '+t.tableNumber+' wall game recorded ✓', true);
+      return;
+    }
+
+    // Read all 4 point inputs
+    var scores = t.players.map(function(name, idx) {
+      var input = document.getElementById('pts-'+tableId+'-'+idx);
+      var val = input ? parseInt(input.value) : 0;
+      return { name: name, points: isNaN(val) ? 0 : val };
+    });
+
+    // Find players with points > 0
+    var scorers = scores.filter(function(s) { return s.points > 0; });
+
+    if (scorers.length === 0) {
+      showToast('Enter points for the winner, or mark as Wall Game'); return;
+    }
+    if (scorers.length > 1) {
+      showToast('Only one player can have points — only the winner scores'); return;
+    }
+
+    var winner = scorers[0];
+    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner.name, points: winner.points, wallGame: false });
+    activeTables = activeTables.filter(function(x){return x.id!==tableId;});
+    renderActiveTables(); renderGamesLog(); saveState();
+    showToast('Table '+t.tableNumber+' recorded ✓', true);
+  }
+
+  function cancelTable(tableId) {
+    activeTables = activeTables.filter(function(x){return x.id!==tableId;});
+    renderActiveTables(); saveState(); showToast('Table cancelled');
+  }
+
+  function renderGamesLog() {
+    var log = document.getElementById('games-log');
+    if (!gamesLog.length) {
+      log.style.display = 'none';
+      document.getElementById('submit-summary').textContent = 'No games completed yet. Start a table above, then record the winner when it finishes.';
+      return;
+    }
+    log.style.display = 'block';
+    document.getElementById('games-count-label').textContent = 'Completed Games ('+gamesLog.length+')';
+    var html = '';
+    gamesLog.forEach(function(g, i) {
+      html += '<div class="game-entry"><div class="game-entry-left">'+
+        '<div class="game-table-num">Table '+g.tableNumber+'</div>'+
+        '<div class="game-players">'+g.players.join(' · ')+'</div>'+
+        (g.wallGame
+          ? '<div class="game-wall-badge">Wall game</div>'
+          : '<div class="game-winner">🏆 '+g.winner+'<span class="game-points-badge">'+g.points+' pts</span></div>'
+        )+
+        '</div><button class="game-delete" onclick="deleteGame('+i+')">✕</button></div>';
+    });
+    document.getElementById('games-list').innerHTML = html;
+    document.getElementById('submit-summary').textContent =
+      gamesLog.length+' game'+(gamesLog.length===1?'':'s')+' completed · '+
+      checkedInPlayers.length+' player'+(checkedInPlayers.length===1?'':'s')+' checked in.';
+  }
+
+  function deleteGame(index) { gamesLog.splice(index,1); renderGamesLog(); saveState(); }
+
+  // ── SUBMIT — SEQUENTIAL (UNCHANGED) ──────────────────────────────
+
+  function submitResults() {
+    if (!gamesLog.length) { showToast('No completed games to submit yet'); return; }
+    if (activeTables.length > 0) { showToast(activeTables.length+' table(s) still in progress — record or cancel first'); return; }
+
+    var btn      = document.getElementById('submit-btn');
+    var progress = document.getElementById('submit-progress');
+    btn.disabled = true; btn.classList.add('loading');
+    progress.style.display = 'block';
+
+    var eventId   = currentEvent['Event ID'];
+    var eventName = currentEvent['Event Name'] || 'Event';
+    var total     = gamesLog.length;
+    var index     = 0;
+
+    function sendNextGame() {
+      if (index >= total) { progress.textContent = 'Processing results...'; return delay(1000).then(sendSubmitTrigger); }
+      var g = gamesLog[index];
+      progress.textContent = 'Sending game ' + (index+1) + ' of ' + total + '...';
+      index++;
+      return fetch(ENDPOINT, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          action: 'gameResult',
+          eventId: eventId,
+          tableNumber: g.tableNumber,
+          player1: g.players[0]||'',
+          player2: g.players[1]||'',
+          player3: g.players[2]||'',
+          player4: g.players[3]||'',
+          winner: g.winner||'',
+          points: g.points||0,
+          wallGame: g.wallGame
+        })
+      }).then(function() { return delay(500); }).then(sendNextGame);
+    }
+
+    function sendSubmitTrigger() {
+      return fetch(ENDPOINT, {
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          action: 'submitResults',
+          eventId: eventId,
+          eventName: eventName,
+          gameCount: total,
+          checkedInCount: checkedInPlayers.length
+        })
+      });
+    }
+
+    sendNextGame().then(function() {
+      clearState();
+      document.getElementById('screen-app').style.display     = 'none';
+      document.getElementById('screen-success').style.display = 'flex';
+      document.getElementById('success-sub').textContent =
+        total+' game'+(total===1?'':'s')+' submitted for '+eventName+'. MPR ratings will be updated shortly.';
+    }).catch(function() {
+      btn.disabled = false; btn.classList.remove('loading'); progress.style.display = 'none';
+      showToast('Submission error — please try again');
+    });
+  }
+</script>
+</body>
+</html>
