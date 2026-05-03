@@ -96,20 +96,27 @@
 
     /* ACTIVE TABLES */
     .active-table-card { background: white; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--gold); }
-    .active-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .active-table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .active-table-num { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: bold; }
-    .active-table-players { margin-bottom: 12px; }
-    .active-table-players span { display: inline-block; background: var(--green-light); border-radius: 4px; padding: 2px 8px; margin: 2px; font-size: 0.82rem; }
-    .winner-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .winner-select { flex: 1; min-width: 120px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; appearance: none; -webkit-appearance: none; }
-    .points-input { width: 80px; padding: 10px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 0.9rem; color: var(--text); background: white; outline: none; text-align: center; flex-shrink: 0; }
-    .points-input:focus { border-color: var(--gold); }
-    .points-input::placeholder { color: var(--text-light); font-size: 0.8rem; }
-    .points-input:disabled { background: #f5f5f5; color: #bbb; }
+    .cancel-table-btn { background: none; border: none; color: #ccc; font-size: 1rem; cursor: pointer; padding: 2px 6px; }
+
+    /* SCORECARD-STYLE PLAYER ROWS */
+    .score-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .score-row { display: flex; align-items: center; gap: 10px; background: var(--green-light); border-radius: 8px; padding: 10px 12px; }
+    .score-row.wall-mode { opacity: 0.4; pointer-events: none; }
+    .score-row-num { width: 22px; height: 22px; border-radius: 50%; background: var(--green-dark); color: white; font-size: 0.72rem; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .score-row-name { flex: 1; font-size: 0.9rem; font-weight: bold; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .score-pts-input { width: 72px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 7px; font-family: var(--font); font-size: 0.95rem; color: var(--text); background: white; outline: none; text-align: center; flex-shrink: 0; transition: border-color 0.15s; }
+    .score-pts-input:focus { border-color: var(--gold); }
+    .score-pts-input::placeholder { color: #ccc; font-size: 0.8rem; }
+    .score-pts-input.winner-highlight { border-color: var(--green-mid); background: #eef7f3; font-weight: bold; }
+    .score-pts-label { font-size: 0.7rem; color: var(--text-light); flex-shrink: 0; }
+
+    /* TABLE FOOTER ACTIONS */
+    .table-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .wall-btn { padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--text-light); background: white; color: var(--text-light); font-family: var(--font); font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
     .wall-btn.active { background: var(--gold); color: white; border-color: var(--gold); }
-    .record-btn { padding: 10px 16px; border-radius: 8px; border: none; background: var(--gold); color: var(--green-dark); font-family: var(--font); font-size: 0.88rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
-    .cancel-table-btn { background: none; border: none; color: #ccc; font-size: 1rem; cursor: pointer; padding: 2px 6px; }
+    .record-btn { flex: 1; padding: 10px 16px; border-radius: 8px; border: none; background: var(--gold); color: var(--green-dark); font-family: var(--font); font-size: 0.88rem; font-weight: bold; cursor: pointer; white-space: nowrap; text-align: center; }
 
     /* GAMES LOG */
     .games-log { margin-bottom: 20px; }
@@ -148,7 +155,7 @@
     .loading .spinner { display: block; }
     .loading .btn-txt { opacity: 0.5; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } .winner-row { flex-wrap: wrap; } .points-input { width: 70px; } }
+    @media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } .table-actions { flex-wrap: wrap; } .score-pts-input { width: 64px; } }
   </style>
 </head>
 <body>
@@ -286,7 +293,6 @@
   var activeTables     = [];
   var gamesLog         = [];
 
-  // Searchable dropdown state — one per player slot
   var sdState = { p1: '', p2: '', p3: '', p4: '' };
 
   // ── PERSISTENCE ──────────────────────────────────────────────────
@@ -371,9 +377,7 @@
     input.addEventListener('click', function() { openSD(slot); });
     input.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') openSD(slot); });
     search.addEventListener('input', function() { renderSDList(slot, this.value); });
-    search.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeAllSD();
-    });
+    search.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAllSD(); });
   }
 
   function openSD(slot) {
@@ -445,9 +449,7 @@
     if (clear) clear.classList.remove('visible');
   }
 
-  function clearAllSD() {
-    SD_SLOTS.forEach(function(s) { clearSD(s); });
-  }
+  function clearAllSD() { SD_SLOTS.forEach(function(s) { clearSD(s); }); }
 
   function refreshPlayerDropdowns() {
     SD_SLOTS.forEach(function(s) {
@@ -658,32 +660,70 @@
     showToast('Table '+tableNum+' started ✓', true);
   }
 
+  // ── ACTIVE TABLES — SCORECARD STYLE ───────────────────────────────
+
   function renderActiveTables() {
     var section = document.getElementById('active-tables-section');
     var list    = document.getElementById('active-tables-list');
     if (!activeTables.length) { section.style.display = 'none'; refreshTableDropdown(); return; }
     section.style.display = 'block';
     document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
+
     var html = '';
     activeTables.forEach(function(t) {
-      var winnerOpts = '<option value="">Select winner...</option>';
-      t.players.forEach(function(p) { winnerOpts += '<option value="'+esc(p)+'">'+p+'</option>'; });
+      var wallMode = t.wallGame;
       html += '<div class="active-table-card">'+
         '<div class="active-table-header">'+
-        '<div class="active-table-num">🟡 Table '+t.tableNumber+' — In Progress</div>'+
-        '<button class="cancel-table-btn" onclick="cancelTable('+t.id+')">✕</button>'+
+          '<div class="active-table-num">🟡 Table '+t.tableNumber+' — In Progress</div>'+
+          '<button class="cancel-table-btn" onclick="cancelTable('+t.id+')">✕</button>'+
         '</div>'+
-        '<div class="active-table-players">';
-      t.players.forEach(function(p) { html += '<span>'+p+'</span>'; });
-      html += '</div><div class="winner-row">'+
-        '<select class="winner-select" id="w-'+t.id+'"'+(t.wallGame?' disabled':'')+'>'+winnerOpts+'</select>'+
-        '<input class="points-input" type="number" id="pts-'+t.id+'" placeholder="Pts" min="1"'+(t.wallGame?' disabled':'')+' inputmode="numeric">'+
-        '<button class="wall-btn'+(t.wallGame?' active':'')+'" onclick="toggleWall('+t.id+')">'+(t.wallGame?'✓ Wall':'Wall Game')+'</button>'+
-        '<button class="record-btn" onclick="recordResult('+t.id+')">Record →</button>'+
-        '</div></div>';
+        '<div class="score-grid">';
+
+      // One row per player — name + points input
+      t.players.forEach(function(playerName, idx) {
+        html +=
+          '<div class="score-row'+(wallMode?' wall-mode':'')+'" id="score-row-'+t.id+'-'+idx+'">'+
+            '<div class="score-row-num">'+(idx+1)+'</div>'+
+            '<div class="score-row-name">'+esc(playerName)+'</div>'+
+            '<input class="score-pts-input" '+
+              'id="pts-'+t.id+'-'+idx+'" '+
+              'type="number" '+
+              'placeholder="Pts" '+
+              'min="1" '+
+              'inputmode="numeric" '+
+              (wallMode ? 'disabled ' : '')+
+              'oninput="highlightWinner('+t.id+')"'+
+            '>'+
+            '<span class="score-pts-label">pts</span>'+
+          '</div>';
+      });
+
+      html += '</div>'+  // end score-grid
+        '<div class="table-actions">'+
+          '<button class="wall-btn'+(wallMode?' active':'')+'" onclick="toggleWall('+t.id+')">'+(wallMode?'✓ Wall Game':'Wall Game')+'</button>'+
+          '<button class="record-btn" onclick="recordResult('+t.id+')">Record →</button>'+
+        '</div>'+
+      '</div>';
     });
+
     list.innerHTML = html;
     refreshTableDropdown();
+  }
+
+  // Highlight the row with points entered (the winner)
+  function highlightWinner(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    t.players.forEach(function(_, idx) {
+      var input = document.getElementById('pts-'+tableId+'-'+idx);
+      if (!input) return;
+      var val = parseInt(input.value);
+      if (val > 0) {
+        input.classList.add('winner-highlight');
+      } else {
+        input.classList.remove('winner-highlight');
+      }
+    });
   }
 
   function toggleWall(tableId) {
@@ -693,24 +733,39 @@
     renderActiveTables(); saveState();
   }
 
+  // Determine winner from whichever player has points entered
   function recordResult(tableId) {
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
 
-    var winner = '';
-    var points = 0;
-
-    if (!t.wallGame) {
-      var sel = document.getElementById('w-'+tableId);
-      winner = sel ? sel.value : '';
-      if (!winner) { showToast('Select a winner or mark as Wall Game'); return; }
-
-      var ptsEl = document.getElementById('pts-'+tableId);
-      points = ptsEl ? parseInt(ptsEl.value) : 0;
-      if (!points || points <= 0 || isNaN(points)) { showToast('Enter the points scored for the winning hand'); return; }
+    if (t.wallGame) {
+      // Wall game — no winner, no points needed
+      gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: '', points: 0, wallGame: true });
+      activeTables = activeTables.filter(function(x){return x.id!==tableId;});
+      renderActiveTables(); renderGamesLog(); saveState();
+      showToast('Table '+t.tableNumber+' wall game recorded ✓', true);
+      return;
     }
 
-    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner, points: points, wallGame: t.wallGame });
+    // Read all 4 point inputs
+    var scores = t.players.map(function(name, idx) {
+      var input = document.getElementById('pts-'+tableId+'-'+idx);
+      var val = input ? parseInt(input.value) : 0;
+      return { name: name, points: isNaN(val) ? 0 : val };
+    });
+
+    // Find players with points > 0
+    var scorers = scores.filter(function(s) { return s.points > 0; });
+
+    if (scorers.length === 0) {
+      showToast('Enter points for the winner, or mark as Wall Game'); return;
+    }
+    if (scorers.length > 1) {
+      showToast('Only one player can have points — only the winner scores'); return;
+    }
+
+    var winner = scorers[0];
+    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner.name, points: winner.points, wallGame: false });
     activeTables = activeTables.filter(function(x){return x.id!==tableId;});
     renderActiveTables(); renderGamesLog(); saveState();
     showToast('Table '+t.tableNumber+' recorded ✓', true);
@@ -749,7 +804,7 @@
 
   function deleteGame(index) { gamesLog.splice(index,1); renderGamesLog(); saveState(); }
 
-  // ── SUBMIT — SEQUENTIAL ───────────────────────────────────────────
+  // ── SUBMIT — SEQUENTIAL (UNCHANGED) ──────────────────────────────
 
   function submitResults() {
     if (!gamesLog.length) { showToast('No completed games to submit yet'); return; }
