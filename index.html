@@ -754,18 +754,23 @@
       return { name: name, points: isNaN(val) ? 0 : val };
     });
 
-    // Find players with points > 0
-    var scorers = scores.filter(function(s) { return s.points > 0; });
+    // Winner = highest scorer
+    var winner = scores.reduce(function(best, s) {
+      return s.points > best.points ? s : best;
+    }, { name: '', points: 0 });
 
-    if (scorers.length === 0) {
+    if (winner.points === 0) {
       showToast('Enter points for the winner, or mark as Wall Game'); return;
     }
-    if (scorers.length > 1) {
-      showToast('Only one player can have points — only the winner scores'); return;
-    }
-
-    var winner = scorers[0];
-    gamesLog.push({ id: t.id, tableNumber: t.tableNumber, players: t.players, winner: winner.name, points: winner.points, wallGame: false });
+    gamesLog.push({
+      id: t.id,
+      tableNumber: t.tableNumber,
+      players: t.players,
+      playerPoints: scores.map(function(s) { return s.points; }),
+      winner: winner.name,
+      points: winner.points,
+      wallGame: false
+    });
     activeTables = activeTables.filter(function(x){return x.id!==tableId;});
     renderActiveTables(); renderGamesLog(); saveState();
     showToast('Table '+t.tableNumber+' recorded ✓', true);
@@ -835,6 +840,10 @@
           player2: g.players[1]||'',
           player3: g.players[2]||'',
           player4: g.players[3]||'',
+          player1Points: g.playerPoints ? (g.playerPoints[0]||0) : 0,
+          player2Points: g.playerPoints ? (g.playerPoints[1]||0) : 0,
+          player3Points: g.playerPoints ? (g.playerPoints[2]||0) : 0,
+          player4Points: g.playerPoints ? (g.playerPoints[3]||0) : 0,
           winner: g.winner||'',
           points: g.points||0,
           wallGame: g.wallGame
