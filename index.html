@@ -56,6 +56,7 @@
     .member-info { flex: 1; }
     .member-name { font-size: 1rem; font-weight: bold; color: var(--text); margin-bottom: 2px; }
     .member-sub { font-size: 0.78rem; color: var(--text-light); }
+    .member-sub .not-affiliated { color: #b8b8b8; font-style: italic; }
     .checkin-btn { padding: 8px 20px; border-radius: 8px; border: none; font-family: var(--font); font-size: 0.85rem; font-weight: bold; cursor: pointer; min-width: 90px; text-align: center; }
     .checkin-btn.not-in { background: var(--green-dark); color: white; }
     .checkin-btn.is-in { background: #eef7f3; color: var(--green-mid); border: 1.5px solid var(--green-mid); }
@@ -311,6 +312,7 @@
  
   var currentEvent     = null;
   var allMembers       = [];
+  var clubLookup       = {};  // clubId -> clubName, populated from the Clubs sheet
   var checkedInPlayers = [];
   var activeTables     = [];
   var gamesLog         = [];
@@ -588,15 +590,34 @@
   }
  
   function loadMembers() {
-    fetchSheet('Members').then(function(rows) {
-      allMembers = rows
+    // Fetch Members and Clubs in parallel. If Clubs fails we just degrade to "Not affiliated" for everyone.
+    var membersPromise = fetchSheet('Members');
+    var clubsPromise   = fetchSheet('Clubs').catch(function() { return []; });
+ 
+    Promise.all([membersPromise, clubsPromise]).then(function(results) {
+      var memberRows = results[0];
+      var clubRows   = results[1] || [];
+ 
+      // Build clubId -> clubName lookup. Header is "Club ID" + "Club Name" (fall back to "Name").
+      clubLookup = {};
+      clubRows.forEach(function(r) {
+        var id   = (r['Club ID']   || '').toString().trim();
+        var name = (r['Club Name'] || r['Name'] || '').toString().trim();
+        if (id && name) clubLookup[id] = name;
+      });
+ 
+      allMembers = memberRows
         .filter(function(r) { var s = (r['Membership Status']||'').toString().trim(); return s==='Member'||s==='Guest'||s==='Active'; })
-        .map(function(r) { return {
-          id: (r['Member ID']||'').toString().trim(),
-          name: ((r['First Name']||'').toString().trim() + ' ' + (r['Last Name']||'').toString().trim()).trim(),
-          mpr: parseFloat(r['Published MPR'])||0,
-          status: (r['Membership Status']||'').toString().trim()
-        }; })
+        .map(function(r) {
+          var clubId = (r['Current Club ID']||'').toString().trim();
+          return {
+            id: (r['Member ID']||'').toString().trim(),
+            name: ((r['First Name']||'').toString().trim() + ' ' + (r['Last Name']||'').toString().trim()).trim(),
+            mpr: parseFloat(r['Published MPR'])||0,
+            status: (r['Membership Status']||'').toString().trim(),
+            clubName: (clubId && clubLookup[clubId]) ? clubLookup[clubId] : ''
+          };
+        })
         .filter(function(m) { return m.id && m.name; })
         .sort(function(a,b) { return a.name.localeCompare(b.name); });
       renderMemberList();
@@ -618,9 +639,12 @@
     var html = '';
     filtered.forEach(function(m) {
       var ci = isCheckedIn(m.id);
+      var clubLabel = m.clubName
+        ? esc(m.clubName)
+        : '<span class="not-affiliated">Not affiliated with a club</span>';
       html += '<div class="member-row'+(ci?' checked-in':'')+'">'+
         '<div class="member-info"><div class="member-name">'+m.name+'</div>'+
-        '<div class="member-sub">MPR '+(m.mpr?m.mpr.toFixed(2):'--')+' · '+m.status+'</div></div>'+
+        '<div class="member-sub">MPR '+(m.mpr?m.mpr.toFixed(2):'--')+' · '+m.status+' · '+clubLabel+'</div></div>'+
         (ci
           ? '<button class="checkin-btn is-in" onclick="uncheckIn(\''+esc(m.id)+'\')">✓ Undo</button>'
           : '<button class="checkin-btn not-in" onclick="checkIn(\''+esc(m.id)+'\',\''+esc(m.name)+'\')">Check In</button>'
