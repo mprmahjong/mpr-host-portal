@@ -773,7 +773,7 @@
           '<button class="add-game-btn" onclick="addGame('+t.id+')">+ Add Game</button>'+
           '<button class="save-table-btn" onclick="saveTable('+t.id+')">Save Table →</button>'+
         '</div>'+
-        '<div class="scorecard-hint">Enter the winner\'s points in each game column. Leave non-winners blank. Check the "Wall?" box for any game that ended in a wall.</div>'+
+        '<div class="scorecard-hint">Enter each player\'s points per game. Leave blank for players who didn\'t score. Check the "Wall?" box for any game that ended in a wall.</div>'+
       '</div>';
     });
  
@@ -838,58 +838,56 @@
     renderActiveTables(); saveState(); showToast('Table cancelled');
   }
  
-  // Save Table — validate every game, commit each non-empty game to gamesLog
+  // Save Table — commit each non-empty game to gamesLog.
+  // Multiple players can score in the same game; the algorithm sums per-player points.
+  // "Winner" is recorded as the highest-scoring player for audit purposes (ties broken by lowest index).
   function saveTable(tableId) {
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
  
     var toCommit = [];
-    var errors = [];
  
     t.games.forEach(function(g, gi) {
-      var gameLabel = 'Game ' + (gi + 1);
       if (g.wallGame) {
-        toCommit.push({ wallGame: true, winnerIdx: -1, points: 0, gameIdx: gi });
+        toCommit.push({ wallGame: true, points: [0,0,0,0], winnerIdx: -1, gameIdx: gi });
         return;
       }
-      var winnersFound = [];
+      // Build a length-4 points array padded with zeros for absent seats.
+      var paddedPoints = [0, 0, 0, 0];
+      var anyScore = false;
+      var winnerIdx = -1;
+      var winnerPts = 0;
       g.points.forEach(function(pts, pIdx) {
         var v = parseInt(pts) || 0;
-        if (v > 0) winnersFound.push({ idx: pIdx, pts: v });
+        if (pIdx < 4) paddedPoints[pIdx] = v;
+        if (v > 0) {
+          anyScore = true;
+          if (v > winnerPts) { winnerPts = v; winnerIdx = pIdx; }
+        }
       });
-      if (winnersFound.length === 0) return; // game not played, skip silently
-      if (winnersFound.length > 1) {
-        errors.push(gameLabel + ' has '+winnersFound.length+' players with points — only one player can win');
-        return;
-      }
-      toCommit.push({ wallGame: false, winnerIdx: winnersFound[0].idx, points: winnersFound[0].pts, gameIdx: gi });
+      if (!anyScore) return; // game not played, skip silently
+      toCommit.push({ wallGame: false, points: paddedPoints, winnerIdx: winnerIdx, gameIdx: gi });
     });
  
-    if (errors.length) {
-      showToast(errors[0], 'red');
-      return;
-    }
     if (toCommit.length === 0) {
       showToast('No games entered — enter scores or cancel the table', 'red');
       return;
     }
  
-    // Push each game to gamesLog in the existing shape: 4 player slots padded with empty strings.
+    // Push each game to gamesLog in the existing payload shape (4 player slots padded with empty strings).
     toCommit.forEach(function(c) {
       var paddedPlayers = [t.players[0]||'', t.players[1]||'', t.players[2]||'', t.players[3]||''];
-      var paddedPoints  = [0, 0, 0, 0];
       var winner = '';
       var winnerPoints = 0;
       if (!c.wallGame && c.winnerIdx >= 0) {
-        paddedPoints[c.winnerIdx] = c.points;
         winner = t.players[c.winnerIdx] || '';
-        winnerPoints = c.points;
+        winnerPoints = c.points[c.winnerIdx] || 0;
       }
       gamesLog.push({
         id: Date.now() + Math.random(),
         tableNumber: t.tableNumber,
         players: paddedPlayers,
-        playerPoints: paddedPoints,
+        playerPoints: c.points,
         winner: winner,
         points: winnerPoints,
         wallGame: c.wallGame
