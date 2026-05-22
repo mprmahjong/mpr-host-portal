@@ -64,8 +64,11 @@
     /* PLAYERS */
     .player-chip { background: white; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 8px; }
     .player-num { width: 28px; height: 28px; border-radius: 50%; background: var(--green-dark); color: white; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .player-chip-name { font-size: 0.95rem; font-weight: bold; flex: 1; }
-    .player-chip-mpr { font-size: 0.78rem; color: var(--text-light); }
+    .player-chip-info { flex: 1; min-width: 0; }
+    .player-chip-name { font-size: 0.95rem; font-weight: bold; }
+    .player-chip-club { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+    .player-chip-club.not-affiliated { color: #b8b8b8; font-style: italic; }
+    .player-chip-mpr { font-size: 0.78rem; color: var(--text-light); flex-shrink: 0; }
  
     /* RESULTS — START TABLE FORM */
     .start-table-form { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
@@ -678,9 +681,18 @@
     var html = '';
     checkedInPlayers.forEach(function(p, i) {
       var m = allMembers.find(function(x) { return String(x.id)===String(p.id); });
-      html += '<div class="player-chip"><div class="player-num">'+(i+1)+'</div>'+
-        '<div class="player-chip-name">'+p.name+'</div>'+
-        '<div class="player-chip-mpr">MPR '+(m?m.mpr.toFixed(2):'--')+'</div></div>';
+      var clubName = m ? m.clubName : '';
+      var clubLine = clubName
+        ? '<div class="player-chip-club">'+esc(clubName)+'</div>'
+        : '<div class="player-chip-club not-affiliated">Not affiliated with a club</div>';
+      html += '<div class="player-chip">'+
+        '<div class="player-num">'+(i+1)+'</div>'+
+        '<div class="player-chip-info">'+
+          '<div class="player-chip-name">'+esc(p.name)+'</div>'+
+          clubLine+
+        '</div>'+
+        '<div class="player-chip-mpr">MPR '+(m?m.mpr.toFixed(2):'--')+'</div>'+
+      '</div>';
     });
     document.getElementById('players-list').innerHTML = html;
   }
