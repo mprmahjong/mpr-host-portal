@@ -186,6 +186,8 @@
     .success-icon { font-size: 4rem; margin-bottom: 24px; }
     .success-title { font-size: 1.8rem; font-weight: bold; color: var(--gold); margin-bottom: 12px; }
     .success-sub { font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.7; max-width: 320px; }
+    .rollback-btn { display: none; margin-top: 24px; padding: 11px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.35); background: transparent; color: white; font-family: var(--font); font-weight: bold; cursor: pointer; }
+    .rollback-btn:disabled { cursor: wait; opacity: 0.6; }
 
     .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
     .loading .spinner { display: block; }
@@ -334,24 +336,30 @@
 
 <div id="screen-success" style="display:none; flex-direction:column;">
   <div class="success-icon">✅</div>
-  <div class="success-title">Results Submitted</div>
+  <div class="success-title" id="success-title">Results Submitted</div>
   <div class="success-sub" id="success-sub">All results have been recorded.</div>
+  <button class="rollback-btn" id="rollback-btn" onclick="rollbackLastSubmission()">Undo this submission</button>
 </div>
 
 <div id="toast"></div>
 
 <script>
-  var SHEET_ID    = '17mrQewoVdPRMlvzqTdA_d7-XmxRnYvEuhyoT0q9uPfw';
-  var ENDPOINT    = 'https://script.google.com/macros/s/AKfycbxuFe1aW7i_LBIL6HK6B6lKNqgV613Qr74wA-nFNZ16s34UI79PS1kfR952_L6du6dM/exec';
-  var STORAGE_KEY = 'mpr_host_session';
+  var queryParams = new URLSearchParams(window.location.search);
+  var API_BASE_URL = (queryParams.get('apiBase') || 'https://mprmahjong.com').replace(/\/+$/, '');
+  var PORTAL_AUTH_STORAGE_KEY = 'mpr_results_portal_authorization';
+  var STORAGE_KEY = 'mpr_results_session_v2';
   var DEFAULT_GAMES_PER_TABLE = 5;
 
   var currentEvent     = null;
   var allMembers       = [];
-  var clubLookup       = {};  // clubId -> clubName, populated from the Clubs sheet
   var checkedInPlayers = [];
   var activeTables     = [];
   var gamesLog         = [];
+  var portalPlayers    = [];
+  var submissionId     = '';
+  var lastAppliedSessionId = '';
+  var authorizationWindow = null;
+  var pendingCodeValidation = false;
 
   var sdState = { p1: '', p2: '', p3: '', p4: '' };
 
@@ -361,7 +369,8 @@
     if (!currentEvent) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       eventId: currentEvent['Event ID'], eventData: currentEvent,
-      checkedInPlayers: checkedInPlayers, activeTables: activeTables, gamesLog: gamesLog
+      checkedInPlayers: checkedInPlayers, activeTables: activeTables, gamesLog: gamesLog,
+      submissionId: submissionId
     }));
   }
   function clearState() { localStorage.removeItem(STORAGE_KEY); }
@@ -388,17 +397,94 @@
     if (name === 'results') refreshPlayerDropdowns();
   }
 
-  function fetchSheet(tab) {
-    var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
-      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(tab) + '&_=' + Date.now();
-    return fetch(url).then(function(r) { return r.text(); }).then(function(text) {
-      var json = JSON.parse(text.substring(47, text.length - 2));
-      var cols = json.table.cols.map(function(c) { return c.label; });
-      return json.table.rows.map(function(row) {
-        var obj = {};
-        row.c.forEach(function(cell, i) { obj[cols[i]] = cell ? cell.v : ''; });
-        return obj;
+  function createSubmissionId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return 'portal-session-' + window.crypto.randomUUID();
+    }
+    return 'portal-session-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  function getPortalToken() {
+    try {
+      var saved = JSON.parse(sessionStorage.getItem(PORTAL_AUTH_STORAGE_KEY) || 'null');
+      if (!saved || !saved.token || !saved.expiresAt) return '';
+      if (new Date(saved.expiresAt).getTime() <= Date.now() + 30000) {
+        sessionStorage.removeItem(PORTAL_AUTH_STORAGE_KEY);
+        return '';
+      }
+      return saved.token;
+    } catch (error) {
+      sessionStorage.removeItem(PORTAL_AUTH_STORAGE_KEY);
+      return '';
+    }
+  }
+
+  function requestPortalAuthorization() {
+    authorizationWindow = window.open(
+      API_BASE_URL + '/results-portal/authorize',
+      'mpr-results-portal-authorization',
+      'popup=yes,width=520,height=620'
+    );
+    if (!authorizationWindow) {
+      showToast('Allow popups to connect the results portal.', 'red');
+      pendingCodeValidation = false;
+      return;
+    }
+    showToast('Sign in to MPR to approve portal access.', 'gold');
+  }
+
+  window.addEventListener('message', function(event) {
+    if (event.origin !== new URL(API_BASE_URL).origin) return;
+    if (!event.data || event.data.type !== 'mpr-results-portal-authorization') return;
+    if (!event.data.token || !event.data.expiresAt) return;
+    sessionStorage.setItem(PORTAL_AUTH_STORAGE_KEY, JSON.stringify({
+      token: event.data.token,
+      expiresAt: event.data.expiresAt
+    }));
+    authorizationWindow = null;
+    showToast('MPR access approved.', 'gold');
+    if (pendingCodeValidation) {
+      pendingCodeValidation = false;
+      validateCode();
+    }
+  });
+
+  function apiJson(url, options) {
+    var token = getPortalToken();
+    if (!token) return Promise.reject(new Error('Connect to MPR before continuing.'));
+    var requestOptions = options || {};
+    requestOptions.headers = Object.assign({}, requestOptions.headers || {}, {
+      'Authorization': 'Bearer ' + token
+    });
+    return fetch(API_BASE_URL + url, requestOptions).then(function(response) {
+      return response.json().catch(function() { return {}; }).then(function(body) {
+        if (!response.ok) {
+          if (response.status === 401) sessionStorage.removeItem(PORTAL_AUTH_STORAGE_KEY);
+          var message = body && body.error && body.error.message;
+          throw new Error(message || 'Request failed (' + response.status + ')');
+        }
+        return body;
       });
+    });
+  }
+
+  function fetchPortalEvent(code) {
+    return apiJson('/api/results/events/' + encodeURIComponent(code)).then(function(body) {
+      var payload = body.data;
+      if (!payload || !payload.event || !Array.isArray(payload.players)) {
+        throw new Error('The platform returned an invalid event response.');
+      }
+      return {
+        event: {
+          'Event ID': payload.event.id,
+          'Event Name': payload.event.title,
+          'Event Date': payload.event.startAt,
+          'City': payload.event.city,
+          'State': payload.event.stateCode,
+          'Host Code': payload.event.hostCode
+        },
+        players: payload.players
+      };
     });
   }
 
@@ -408,6 +494,10 @@
       var m = String(raw).match(/Date\((\d+),(\d+),(\d+)\)/);
       if (m) return new Date(+m[1], +m[2], +m[3]).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
     } catch(e) {}
+    var parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+    }
     return String(raw);
   }
 
@@ -436,8 +526,6 @@
   }
 
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function delay(ms) { return new Promise(function(res) { setTimeout(res, ms); }); }
-
   // ── SEARCHABLE DROPDOWN ───────────────────────────────────────────
 
   var SD_SLOTS = ['p1','p2','p3','p4'];
@@ -493,23 +581,23 @@
     }
     var html = '';
     filtered.forEach(function(p) {
-      var busyActive  = activePlayers.indexOf(p.name) !== -1;
-      var busySlot    = otherSelected.indexOf(p.name) !== -1;
+      var busyActive  = activePlayers.indexOf(p.id) !== -1;
+      var busySlot    = otherSelected.indexOf(p.id) !== -1;
       var disabled    = busyActive || busySlot;
-      var isSelected  = sdState[slot] === p.name;
+      var isSelected  = sdState[slot] === p.id;
       var label       = p.name + (busyActive ? ' (at table)' : busySlot ? ' (already selected)' : '');
       var cls         = 'sd-option' + (disabled ? ' disabled' : '') + (isSelected ? ' selected' : '');
-      var onclick     = disabled ? '' : 'onclick="selectSD(\''+slot+'\',\''+esc(p.name)+'\')"';
+      var onclick     = disabled ? '' : 'onclick="selectSD(\''+slot+'\',\''+esc(p.id)+'\')"';
       html += '<div class="'+cls+'" '+onclick+'>'+label+'</div>';
     });
     listEl.innerHTML = html;
   }
 
-  function selectSD(slot, name) {
-    sdState[slot] = name;
+  function selectSD(slot, id) {
+    sdState[slot] = id;
     var input = document.getElementById('sd-input-'+slot);
     var clear = document.getElementById('sd-clear-'+slot);
-    if (input) { input.value = name; input.classList.remove('placeholder-mode'); input.classList.add('has-value'); }
+    if (input) { input.value = playerName(id); input.classList.remove('placeholder-mode'); input.classList.add('has-value'); }
     if (clear) clear.classList.add('visible');
     closeAllSD();
     SD_SLOTS.forEach(function(s) {
@@ -561,29 +649,28 @@
   function validateCode() {
     var code = document.getElementById('code-input').value.trim();
     if (!code) { document.getElementById('code-input').classList.add('error'); return; }
+    if (!getPortalToken()) {
+      pendingCodeValidation = true;
+      requestPortalAuthorization();
+      return;
+    }
     var btn = document.getElementById('code-btn');
     btn.disabled = true; btn.classList.add('loading');
-    fetchSheet('Events').then(function(rows) {
-      var match = null;
-      for (var i = 0; i < rows.length; i++) {
-        if (String(rows[i]['Host Code'] || '').trim() === code) { match = rows[i]; break; }
-      }
-      if (!match) {
-        document.getElementById('code-input').classList.add('error');
-        document.getElementById('code-err').classList.add('show');
-        btn.disabled = false; btn.classList.remove('loading');
-        return;
-      }
+    fetchPortalEvent(code).then(function(payload) {
+      var match = payload.event;
+      portalPlayers = payload.players;
       var saved = getSavedState();
       if (saved && String(saved.eventId) === String(match['Event ID'])) {
         currentEvent = match;
         checkedInPlayers = saved.checkedInPlayers || [];
         activeTables     = (saved.activeTables || []).map(migrateActiveTable);
         gamesLog         = saved.gamesLog || [];
+        submissionId     = saved.submissionId || createSubmissionId();
         showToast('Session restored — ' + checkedInPlayers.length + ' checked in, ' + gamesLog.length + ' games saved', 'gold');
       } else {
         clearState();
         currentEvent = match; checkedInPlayers = []; activeTables = []; gamesLog = [];
+        submissionId = createSubmissionId();
       }
       launchApp();
     }).catch(function() {
@@ -650,36 +737,19 @@
   }
 
   function loadMembers() {
-    var membersPromise = fetchSheet('Members');
-    var clubsPromise   = fetchSheet('Clubs').catch(function() { return []; });
-
-    Promise.all([membersPromise, clubsPromise]).then(function(results) {
-      var memberRows = results[0];
-      var clubRows   = results[1] || [];
-
-      clubLookup = {};
-      clubRows.forEach(function(r) {
-        var id   = (r['Club ID']   || '').toString().trim();
-        var name = (r['Club Name'] || r['Name'] || '').toString().trim();
-        if (id && name) clubLookup[id] = name;
-      });
-
-      allMembers = memberRows
-        .filter(function(r) { var s = (r['Membership Status']||'').toString().trim(); return s==='Member'||s==='Guest'||s==='Active'; })
-        .map(function(r) {
-          var clubId = (r['Current Club ID']||'').toString().trim();
-          return {
-            id: (r['Member ID']||'').toString().trim(),
-            name: ((r['First Name']||'').toString().trim() + ' ' + (r['Last Name']||'').toString().trim()).trim(),
-            mpr: parseFloat(r['Published MPR'])||0,
-            status: (r['Membership Status']||'').toString().trim(),
-            clubName: (clubId && clubLookup[clubId]) ? clubLookup[clubId] : ''
-          };
-        })
-        .filter(function(m) { return m.id && m.name; })
-        .sort(function(a,b) { return a.name.localeCompare(b.name); });
-      renderMemberList();
-    });
+    allMembers = portalPlayers
+      .map(function(player) {
+        return {
+          id: String(player.id || '').trim(),
+          name: String(player.name || '').trim(),
+          mpr: parseFloat(player.rating) || 0,
+          status: String(player.membershipStatus || '').trim(),
+          clubName: player.club && player.club.name ? String(player.club.name) : ''
+        };
+      })
+      .filter(function(member) { return member.id && member.name; })
+      .sort(function(a,b) { return a.name.localeCompare(b.name); });
+    renderMemberList();
   }
 
   // ── CHECK IN ──────────────────────────────────────────────────────
@@ -760,6 +830,11 @@
     return list;
   }
 
+  function playerName(id) {
+    var player = allMembers.find(function(member) { return String(member.id) === String(id); });
+    return player ? player.name : String(id || 'Unknown player');
+  }
+
   function getActiveTableNumbers() { return activeTables.map(function(t) { return t.tableNumber; }); }
 
   function startTable() {
@@ -769,11 +844,11 @@
 
     if (!tableNum) { showToast('Please select a table number'); return; }
     if (getActiveTableNumbers().indexOf(tableNum) !== -1) { showToast('Table '+tableNum+' is already in progress'); return; }
-    if (players.length < 2) { showToast('Need at least 2 players to start a table'); return; }
+    if (players.length !== 4) { showToast('Select exactly 4 players to start a table'); return; }
     if (new Set(players).size !== players.length) { showToast('Each player can only appear once per table'); return; }
     var activePlayers = getActivePlayers();
     var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
-    if (conflict) { showToast(conflict + ' is already at an active table'); return; }
+    if (conflict) { showToast(playerName(conflict) + ' is already at an active table'); return; }
 
     activeTables.push({
       id: Date.now(),
@@ -809,7 +884,8 @@
       headerCells += '<th class="col-total">Total</th>';
 
       var playerRows = '';
-      t.players.forEach(function(playerName, pIdx) {
+      t.players.forEach(function(playerId, pIdx) {
+        var displayName = playerName(playerId);
         var rowTotal = computePlayerTotal(t, pIdx);
         var cells = '';
         for (var gi = 0; gi < nGames; gi++) {
@@ -829,7 +905,7 @@
         playerRows +=
           '<tr>'+
             '<td class="col-num"><span class="sc-row-num">'+(pIdx+1)+'</span></td>'+
-            '<td class="col-name" title="'+esc(playerName)+'">'+esc(playerName)+'</td>'+
+            '<td class="col-name" title="'+esc(displayName)+'">'+esc(displayName)+'</td>'+
             cells+
             '<td class="sc-total-cell">'+(rowTotal||'—')+'</td>'+
           '</tr>';
@@ -1003,14 +1079,14 @@
       if (g.wallGame) {
         var visiblePlayers = (g.players || []).filter(function(p) { return !!p; });
         inner =
-          '<div class="game-players">'+visiblePlayers.map(esc).join(' · ')+'</div>'+
+          '<div class="game-players">'+visiblePlayers.map(playerName).map(esc).join(' · ')+'</div>'+
           '<div class="game-wall-badge">Wall game</div>';
       } else {
         var seats = [];
-        (g.players || []).forEach(function(name, idx) {
-          if (!name) return;
+        (g.players || []).forEach(function(playerId, idx) {
+          if (!playerId) return;
           var pts = (g.playerPoints && g.playerPoints[idx]) || 0;
-          seats.push({ name: name, pts: pts, idx: idx, isWinner: name === g.winner });
+          seats.push({ name: playerName(playerId), pts: pts, idx: idx, isWinner: playerId === g.winner });
         });
         var winner = seats.find(function(s) { return s.isWinner; });
         var others = seats.filter(function(s) { return !s.isWinner; });
@@ -1082,60 +1158,72 @@
     btn.disabled = true; btn.classList.add('loading');
     progress.style.display = 'block';
 
-    var eventId   = currentEvent['Event ID'];
     var eventName = currentEvent['Event Name'] || 'Event';
     var total     = gamesLog.length;
-    var index     = 0;
+    var idempotencyKey = submissionId || createSubmissionId();
+    submissionId = idempotencyKey;
+    saveState();
+    progress.textContent = 'Validating and applying ratings...';
 
-    function sendNextGame() {
-      if (index >= total) { progress.textContent = 'Processing results...'; return delay(1000).then(sendSubmitTrigger); }
-      var g = gamesLog[index];
-      progress.textContent = 'Sending game ' + (index+1) + ' of ' + total + '...';
-      index++;
-      return fetch(ENDPOINT, {
-        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          action: 'gameResult',
-          eventId: eventId,
-          tableNumber: g.tableNumber,
-          player1: g.players[0]||'',
-          player2: g.players[1]||'',
-          player3: g.players[2]||'',
-          player4: g.players[3]||'',
-          player1Points: g.playerPoints ? (g.playerPoints[0]||0) : 0,
-          player2Points: g.playerPoints ? (g.playerPoints[1]||0) : 0,
-          player3Points: g.playerPoints ? (g.playerPoints[2]||0) : 0,
-          player4Points: g.playerPoints ? (g.playerPoints[3]||0) : 0,
-          winner: g.winner||'',
-          points: g.points||0,
-          wallGame: g.wallGame
+    var games = gamesLog.map(function(game) {
+      return {
+        tableNumber: parseInt(game.tableNumber, 10),
+        wall: Boolean(game.wallGame),
+        seats: game.players.map(function(playerId, index) {
+          var seat = { playerId: playerId };
+          if (!game.wallGame) seat.points = Number(game.playerPoints[index] || 0);
+          return seat;
         })
-      }).then(function() { return delay(500); }).then(sendNextGame);
-    }
+      };
+    });
 
-    function sendSubmitTrigger() {
-      return fetch(ENDPOINT, {
-        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          action: 'submitResults',
-          eventId: eventId,
-          eventDate: eventDate,
-          eventName: eventName,
-          gameCount: total,
-          checkedInCount: checkedInPlayers.length
-        })
-      });
-    }
-
-    sendNextGame().then(function() {
+    apiJson('/api/results/sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey
+      },
+      body: JSON.stringify({
+        hostCode: currentEvent['Host Code'],
+        eventDate: eventDate,
+        idempotencyKey: idempotencyKey,
+        checkedInPlayerIds: checkedInPlayers.map(function(player) { return player.id; }),
+        games: games
+      })
+    }).then(function(body) {
+      lastAppliedSessionId = body && body.data ? String(body.data.sessionId || '') : '';
       clearState();
       document.getElementById('screen-app').style.display     = 'none';
       document.getElementById('screen-success').style.display = 'flex';
+      document.getElementById('success-title').textContent = 'Results Submitted';
       document.getElementById('success-sub').textContent =
-        total+' game'+(total===1?'':'s')+' submitted for '+eventName+'. MPR ratings will be updated shortly.';
-    }).catch(function() {
+        total+' game'+(total===1?'':'s')+' submitted for '+eventName+'. MPR ratings are updated.';
+      document.getElementById('rollback-btn').style.display = lastAppliedSessionId ? 'block' : 'none';
+    }).catch(function(error) {
       btn.disabled = false; btn.classList.remove('loading'); progress.style.display = 'none';
-      showToast('Submission error — please try again', 'red');
+      showToast(error.message || 'Submission error — please try again', 'red');
+    });
+  }
+
+  function rollbackLastSubmission() {
+    if (!lastAppliedSessionId) return;
+    if (!confirm('Undo this submission and restore the prior ratings?')) return;
+    var btn = document.getElementById('rollback-btn');
+    btn.disabled = true;
+    btn.textContent = 'Undoing...';
+    apiJson('/api/results/sessions/' + encodeURIComponent(lastAppliedSessionId), {
+      method: 'DELETE'
+    }).then(function() {
+      lastAppliedSessionId = '';
+      btn.style.display = 'none';
+      document.querySelector('.success-icon').textContent = '↩️';
+      document.getElementById('success-title').textContent = 'Submission Rolled Back';
+      document.getElementById('success-sub').textContent =
+        'The rating changes were reversed. Reload the portal when you are ready to submit corrected results.';
+    }).catch(function(error) {
+      btn.disabled = false;
+      btn.textContent = 'Undo this submission';
+      showToast(error.message || 'Unable to undo this submission', 'red');
     });
   }
 </script>
