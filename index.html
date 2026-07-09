@@ -345,7 +345,11 @@
 
 <script>
   var queryParams = new URLSearchParams(window.location.search);
-  var API_BASE_URL = (queryParams.get('apiBase') || 'https://mprmahjong.com').replace(/\/+$/, '');
+  // Canonical origin: mprmahjong.com 307-redirects to www.mprmahjong.com, so
+  // the popup would land on the www origin and its postMessage would be
+  // rejected by the event.origin check below. Point straight at www to keep
+  // the popup, the message origin, and API calls on one consistent origin.
+  var API_BASE_URL = (queryParams.get('apiBase') || 'https://www.mprmahjong.com').replace(/\/+$/, '');
   var PORTAL_AUTH_STORAGE_KEY = 'mpr_results_portal_authorization';
   var STORAGE_KEY = 'mpr_results_session_v2';
   var DEFAULT_GAMES_PER_TABLE = 5;
