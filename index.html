@@ -848,7 +848,7 @@
 
     if (!tableNum) { showToast('Please select a table number'); return; }
     if (getActiveTableNumbers().indexOf(tableNum) !== -1) { showToast('Table '+tableNum+' is already in progress'); return; }
-    if (players.length !== 4) { showToast('Select exactly 4 players to start a table'); return; }
+    if (players.length < 2 || players.length > 4) { showToast('Select 2, 3, or 4 players to start a table'); return; }
     if (new Set(players).size !== players.length) { showToast('Each player can only appear once per table'); return; }
     var activePlayers = getActivePlayers();
     var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
@@ -1017,17 +1017,18 @@
     var toCommit = [];
 
     t.games.forEach(function(g, gi) {
+      var seatCount = t.players.length;
       if (g.wallGame) {
-        toCommit.push({ wallGame: true, points: [0,0,0,0], winnerIdx: -1, gameIdx: gi });
+        toCommit.push({ wallGame: true, points: t.players.map(function(){ return 0; }), winnerIdx: -1, gameIdx: gi });
         return;
       }
-      var paddedPoints = [0, 0, 0, 0];
+      var paddedPoints = t.players.map(function(){ return 0; });
       var anyScore = false;
       var winnerIdx = -1;
       var winnerPts = 0;
       g.points.forEach(function(pts, pIdx) {
         var v = parseInt(pts) || 0;
-        if (pIdx < 4) paddedPoints[pIdx] = v;
+        if (pIdx < seatCount) paddedPoints[pIdx] = v;
         if (v > 0) {
           anyScore = true;
           if (v > winnerPts) { winnerPts = v; winnerIdx = pIdx; }
@@ -1043,7 +1044,7 @@
     }
 
     toCommit.forEach(function(c) {
-      var paddedPlayers = [t.players[0]||'', t.players[1]||'', t.players[2]||'', t.players[3]||''];
+      var seatPlayers = t.players.slice();
       var winner = '';
       var winnerPoints = 0;
       if (!c.wallGame && c.winnerIdx >= 0) {
@@ -1053,7 +1054,7 @@
       gamesLog.push({
         id: Date.now() + Math.random(),
         tableNumber: t.tableNumber,
-        players: paddedPlayers,
+        players: seatPlayers,
         playerPoints: c.points,
         winner: winner,
         points: winnerPoints,
@@ -1177,7 +1178,7 @@
           var seat = { playerId: playerId };
           if (!game.wallGame) seat.points = Number(game.playerPoints[index] || 0);
           return seat;
-        })
+        }).filter(function(seat) { return seat.playerId; })
       };
     });
 
