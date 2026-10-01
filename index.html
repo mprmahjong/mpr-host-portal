@@ -889,7 +889,28 @@
     showToast(name + ' checked in ✓', 'gold');
   }
 
+  // Where a checked-in player sits right now: at a table in progress, or in
+  // saved games. Both are told at Undo, because the server would otherwise
+  // refuse the whole night at Submit ("Every seat must reference a checked-in
+  // player") long after the Undo was pressed.
+  function whereSeated(id) {
+    var active = activeTables.find(function(t) { return (t.players || []).indexOf(id) !== -1; });
+    var saved = gamesLog.filter(function(g) { return (g.players || []).indexOf(id) !== -1; });
+    var tables = [];
+    saved.forEach(function(g) { if (tables.indexOf(g.tableNumber) === -1) tables.push(g.tableNumber); });
+    return { active: active || null, savedCount: saved.length, savedTables: tables };
+  }
+
   function uncheckIn(id) {
+    var where = whereSeated(id);
+    if (where.active) {
+      showToast(playerName(id)+' is seated at Table '+where.active.tableNumber+' (in progress) — take them off the table first', 'red');
+      return;
+    }
+    if (where.savedCount) {
+      showToast(playerName(id)+' is in '+where.savedCount+' saved game'+(where.savedCount===1?'':'s')+' on Table '+where.savedTables.join(', ')+' — edit or delete those games first', 'red');
+      return;
+    }
     var name = '';
     checkedInPlayers = checkedInPlayers.filter(function(p) { if(String(p.id)===String(id)){name=p.name;return false;} return true; });
     updateCheckedInBadge(); renderMemberList(); saveState();
