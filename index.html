@@ -118,6 +118,12 @@
     .sc-row-num { width: 22px; height: 22px; border-radius: 50%; background: var(--green-dark); color: white; font-size: 0.7rem; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; }
     .scorecard td.col-name { text-align: left; padding-left: 6px; font-size: 0.88rem; font-weight: bold; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
     .scorecard td.col-name .sc-name-cell { display: flex; align-items: center; gap: 8px; }
+    .sc-seat-btn { background: none; border: none; padding: 0; font: inherit; font-weight: bold; color: var(--text); cursor: pointer; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sc-seat-btn:hover, .sc-seat-btn:focus-visible { color: var(--green-mid); outline: none; text-decoration: underline dotted; }
+    .sc-seat-caret { color: #bbb; font-size: 0.7rem; }
+    .sc-seat-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.8rem; padding: 0 4px; margin-left: 2px; }
+    .sc-seat-remove:hover { color: #B94040; }
+    .sc-seat-select { width: 100%; max-width: 170px; padding: 5px 6px; border: 1px solid var(--green-mid); border-radius: 6px; font-family: var(--font); font-size: 0.85rem; color: var(--text); background: white; }
     .sc-game-input { width: 48px; padding: 7px 4px; border: 1.5px solid var(--border); border-radius: 6px; font-family: var(--font); font-size: 0.92rem; color: var(--text); background: white; outline: none; text-align: center; transition: border-color 0.15s, background 0.15s; }
     .sc-game-input:focus { border-color: var(--gold); }
     .sc-game-input::placeholder { color: #ddd; font-size: 0.78rem; }
@@ -146,6 +152,13 @@
     .game-points-badge { display: inline-block; background: var(--green-light); border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; font-size: 0.75rem; color: var(--green-mid); font-weight: bold; margin-left: 6px; vertical-align: middle; }
     .game-wall-badge { font-size: 0.72rem; color: var(--text-light); font-style: italic; }
     .game-delete { background: none; border: none; color: #ccc; font-size: 1.1rem; cursor: pointer; padding: 2px 6px; flex-shrink: 0; }
+    .game-entry-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .game-edit { background: none; border: none; color: var(--green-mid); font-family: var(--font); font-size: 0.78rem; font-weight: bold; cursor: pointer; padding: 2px 6px; }
+    .game-edit:hover { text-decoration: underline; }
+    .game-batch { margin-bottom: 14px; }
+    .game-batch-head { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 6px; }
+    .batch-edit-btn { background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: var(--font); font-size: 0.8rem; font-weight: bold; color: var(--green-mid); cursor: pointer; }
+    .batch-edit-btn:hover { border-color: var(--green-mid); }
     .game-scores { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .score-chip { font-size: 0.78rem; background: var(--green-light); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--text); display: inline-flex; align-items: center; gap: 6px; line-height: 1.3; }
     .score-chip strong { color: var(--green-mid); font-weight: bold; }
@@ -1023,14 +1036,37 @@
               'onkeydown="onGridKey(event)"'+
             '></td>';
         }
+        // The name is a control: it opens a picker to put someone else in
+        // the seat, keeping the seat's scores. A seat with nothing typed in
+        // it can be removed while the table keeps at least two.
+        var seatCell;
+        if (t.seatPicker === pIdx) {
+          seatCell = '<td class="col-name">'+seatSelectHtml(t, pIdx)+'</td>';
+        } else {
+          seatCell = '<td class="col-name" title="'+esc(displayName)+'">'+
+            '<button type="button" class="sc-seat-btn" title="Change player in seat '+(pIdx+1)+'" onclick="openSeatPicker('+t.id+','+pIdx+')">'+esc(displayName)+' <span class="sc-seat-caret">▾</span></button>'+
+            (seatRemovable(t, pIdx) ? '<button type="button" class="sc-seat-remove" title="Remove this seat" aria-label="Remove '+esc(displayName)+' from the table" onclick="removeSeat('+t.id+','+pIdx+')">✕</button>' : '')+
+          '</td>';
+        }
         playerRows +=
           '<tr>'+
             '<td class="col-num"><span class="sc-row-num">'+(pIdx+1)+'</span></td>'+
-            '<td class="col-name" title="'+esc(displayName)+'">'+esc(displayName)+'</td>'+
+            seatCell+
             cells+
             '<td class="sc-total-cell">'+totalLabel(t, pIdx)+'</td>'+
           '</tr>';
       });
+      if (t.seatPicker === t.players.length) {
+        var blankCells = '';
+        for (var bi = 0; bi < nGames; bi++) blankCells += '<td></td>';
+        playerRows +=
+          '<tr class="sc-add-seat-row">'+
+            '<td class="col-num"><span class="sc-row-num">'+(t.players.length+1)+'</span></td>'+
+            '<td class="col-name">'+seatSelectHtml(t, t.players.length)+'</td>'+
+            blankCells+
+            '<td class="sc-total-cell">—</td>'+
+          '</tr>';
+      }
 
       var wallCells = '';
       for (var gi = 0; gi < nGames; gi++) {
@@ -1044,8 +1080,8 @@
 
       html += '<div class="scorecard-card">'+
         '<div class="scorecard-header">'+
-          '<div class="scorecard-title">🟡 Table '+t.tableNumber+' — In Progress</div>'+
-          '<button class="scorecard-cancel" onclick="cancelTable('+t.id+')" title="Cancel table">✕</button>'+
+          '<div class="scorecard-title">'+(t.reopened ? '✏️ Table '+t.tableNumber+' — Editing saved games' : '🟡 Table '+t.tableNumber+' — In Progress')+'</div>'+
+          '<button class="scorecard-cancel" onclick="cancelTable('+t.id+')" title="'+(t.reopened ? 'Discard these edits and the saved games' : 'Cancel table')+'">✕</button>'+
         '</div>'+
         '<div class="scorecard-wrap">'+
           '<table class="scorecard">'+
@@ -1063,6 +1099,7 @@
         '</div>'+
         '<div class="scorecard-actions">'+
           '<button class="add-game-btn" onclick="addGame('+t.id+')">+ Add Game</button>'+
+          (t.players.length < 4 ? '<button class="add-game-btn" onclick="openSeatPicker('+t.id+','+t.players.length+')">+ Add Seat</button>' : '')+
           '<button class="save-table-btn" onclick="saveTable('+t.id+')">Save Table →</button>'+
         '</div>'+
         '<div class="scorecard-hint">Enter each player\'s points per game; a minus sign marks a penalty. Leave blank for players who didn\'t score. Tick "Wall?" for any game that ended in a wall. Tab or Enter moves down the column; Space ticks Wall.</div>'+
@@ -1193,8 +1230,105 @@
     renderActiveTables();
   }
 
+  // ── SEATS ON AN IN-PROGRESS TABLE ────────────────────────────────
+  // A wrong name used to mean cancelling the table and every score with it.
+  // A seat can now be given to someone else (its scores stay), a seat can be
+  // added while the table has fewer than four, and a seat with nothing
+  // typed in it can be removed while the table keeps at least two.
+
+  function seatRemovable(t, pIdx) {
+    if (t.players.length <= 2) return false;
+    return t.games.every(function(g) { return pointsAt(g, pIdx) === null; });
+  }
+
+  // Who may take a seat: the checked-in players who are not at any table in
+  // progress and not already in another seat of this one. The seat's current
+  // occupant stays offered, so the picker can be closed without a change.
+  function eligibleSeatPlayers(t, pIdx) {
+    var elsewhere = [];
+    activeTables.forEach(function(other) {
+      if (other.id === t.id) return;
+      (other.players || []).forEach(function(p) { if (p) elsewhere.push(p); });
+    });
+    var current = t.players[pIdx] || '';
+    return checkedInPlayers.filter(function(p) {
+      if (p.id === current) return true;
+      if (elsewhere.indexOf(p.id) !== -1) return false;
+      return t.players.indexOf(p.id) === -1;
+    });
+  }
+
+  function seatSelectHtml(t, pIdx) {
+    var current = t.players[pIdx] || '';
+    var options = current ? '' : '<option value="">Choose a player…</option>';
+    eligibleSeatPlayers(t, pIdx).forEach(function(p) {
+      options += '<option value="'+esc(p.id)+'"'+(p.id === current ? ' selected' : '')+'>'+esc(p.name)+'</option>';
+    });
+    return '<select class="sc-seat-select" aria-label="Player in seat '+(pIdx+1)+'" data-t="'+t.id+'" data-g="seat" data-p="'+pIdx+'" '+
+      'onchange="changeSeat('+t.id+','+pIdx+',this.value)" '+
+      'onblur="cancelSeatPicker('+t.id+')" '+
+      'onkeydown="if (event.key === \'Escape\') { event.preventDefault(); cancelSeatPicker('+t.id+'); }">'+options+'</select>';
+  }
+
+  function openSeatPicker(tableId, pIdx) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    if (pIdx === t.players.length && t.players.length >= 4) return;
+    t.seatPicker = pIdx;
+    pendingFocus = { t: String(t.id), g: 'seat', p: String(pIdx) };
+    renderActiveTables();
+  }
+
+  function cancelSeatPicker(tableId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t || t.seatPicker === undefined || t.seatPicker === null) return;
+    var wasAdding = t.seatPicker === t.players.length;
+    var pIdx = t.seatPicker;
+    t.seatPicker = null;
+    pendingFocus = wasAdding ? null : { t: String(t.id), g: '0', p: String(pIdx) };
+    renderActiveTables();
+  }
+
+  function changeSeat(tableId, pIdx, newId) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    if (!newId) { cancelSeatPicker(tableId); return; }
+    var allowed = eligibleSeatPlayers(t, pIdx).some(function(p) { return p.id === newId; });
+    if (!allowed) { showToast(playerName(newId) + ' is already seated', 'red'); cancelSeatPicker(tableId); return; }
+    var adding = pIdx === t.players.length;
+    if (adding) {
+      t.players.push(newId);
+      t.games.forEach(function(g) { g.points.push(null); });
+    } else {
+      t.players[pIdx] = newId;
+    }
+    t.seatPicker = null;
+    pendingFocus = { t: String(t.id), g: '0', p: String(pIdx), select: true };
+    renderActiveTables();
+    refreshPlayerDropdowns();
+    saveState();
+    showToast((adding ? 'Seat '+(pIdx+1)+' added — ' : 'Seat '+(pIdx+1)+' is now ') + playerName(newId), 'gold');
+  }
+
+  function removeSeat(tableId, pIdx) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t || !seatRemovable(t, pIdx)) return;
+    var name = playerName(t.players[pIdx]);
+    t.players.splice(pIdx, 1);
+    t.games.forEach(function(g) { g.points.splice(pIdx, 1); });
+    t.seatPicker = null;
+    renderActiveTables();
+    refreshPlayerDropdowns();
+    saveState();
+    showToast(name + ' removed from Table ' + t.tableNumber);
+  }
+
   function cancelTable(tableId) {
-    if (!confirm('Cancel this table? Any scores entered will be lost.')) return;
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    if (!confirm(t.reopened
+      ? 'Discard this table? The saved games you reopened will be lost along with any edits.'
+      : 'Cancel this table? Any scores entered will be lost.')) return;
     activeTables = activeTables.filter(function(x){return x.id!==tableId;});
     renderActiveTables(); saveState(); showToast('Table cancelled');
   }
@@ -1255,7 +1389,10 @@
       return;
     }
 
-    toCommit.forEach(function(c) {
+    // One Save is one batch: the games it commits stay together in the log
+    // under their table, and Edit reopens them together as one sheet.
+    var batchId = t.batchId || ('batch-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+    toCommit.forEach(function(c, order) {
       var seatPlayers = t.players.slice();
       var winner = '';
       var winnerPoints = 0;
@@ -1265,6 +1402,8 @@
       }
       gamesLog.push({
         id: Date.now() + Math.random(),
+        batchId: batchId,
+        gameIdx: order,
         tableNumber: t.tableNumber,
         players: seatPlayers,
         playerPoints: c.points,
@@ -1291,35 +1430,61 @@
     }
     log.style.display = 'block';
     document.getElementById('games-count-label').textContent = 'Saved Games ('+gamesLog.length+')';
-    var html = '';
+
+    // Saved games are shown under the table they were saved from: one block
+    // per Save, with an Edit that reopens the whole block as a sheet. A game
+    // saved before batches existed stands as a block of its own.
+    var batches = [];
     gamesLog.forEach(function(g, i) {
-      var inner;
-      if (g.wallGame) {
-        var visiblePlayers = (g.players || []).filter(function(p) { return !!p; });
-        inner =
-          '<div class="game-players">'+visiblePlayers.map(playerName).map(esc).join(' · ')+'</div>'+
-          '<div class="game-wall-badge">Wall game</div>';
-      } else {
-        var seats = [];
-        (g.players || []).forEach(function(playerId, idx) {
-          if (!playerId) return;
-          var pts = (g.playerPoints && g.playerPoints[idx]) || 0;
-          seats.push({ name: playerName(playerId), pts: pts, idx: idx, isWinner: playerId === g.winner });
-        });
-        var winner = seats.find(function(s) { return s.isWinner; });
-        var others = seats.filter(function(s) { return !s.isWinner; });
-        var ordered = winner ? [winner].concat(others) : seats;
-        var chips = ordered.map(function(s) {
-          var cls = 'score-chip' + (s.isWinner ? ' winner-chip' : (s.pts === 0 ? ' zero' : ''));
-          var prefix = s.isWinner ? '🏆 ' : '';
-          return '<span class="'+cls+'">'+prefix+esc(s.name)+' <strong>'+s.pts+'</strong></span>';
-        }).join('');
-        inner = '<div class="game-scores">'+chips+'</div>';
-      }
-      html += '<div class="game-entry"><div class="game-entry-left">'+
-        '<div class="game-table-num">Table '+g.tableNumber+'</div>'+
-        inner+
-      '</div><button class="game-delete" onclick="deleteGame('+i+')" title="Delete this game">✕</button></div>';
+      var last = batches[batches.length - 1];
+      var key = g.batchId || ('solo-' + i);
+      if (last && last.key === key) { last.games.push({ game: g, index: i }); return; }
+      batches.push({ key: key, batchId: g.batchId || '', tableNumber: g.tableNumber, games: [{ game: g, index: i }] });
+    });
+
+    var html = '';
+    batches.forEach(function(b) {
+      var editable = !!b.batchId;
+      html += '<div class="game-batch">'+
+        '<div class="game-batch-head">'+
+          '<span class="game-table-num">Table '+b.tableNumber+' · '+b.games.length+' game'+(b.games.length===1?'':'s')+'</span>'+
+          (editable ? '<button type="button" class="batch-edit-btn" onclick="editBatch(\''+esc(b.batchId)+'\')">Edit table</button>' : '')+
+        '</div>';
+      b.games.forEach(function(entry, k) {
+        var g = entry.game;
+        var i = entry.index;
+        var inner;
+        if (g.wallGame) {
+          var visiblePlayers = (g.players || []).filter(function(p) { return !!p; });
+          inner =
+            '<div class="game-players">'+visiblePlayers.map(playerName).map(esc).join(' · ')+'</div>'+
+            '<div class="game-wall-badge">Wall game</div>';
+        } else {
+          var seats = [];
+          (g.players || []).forEach(function(playerId, idx) {
+            if (!playerId) return;
+            var pts = (g.playerPoints && g.playerPoints[idx]) || 0;
+            seats.push({ name: playerName(playerId), pts: pts, idx: idx, isWinner: playerId === g.winner });
+          });
+          var winner = seats.find(function(s) { return s.isWinner; });
+          var others = seats.filter(function(s) { return !s.isWinner; });
+          var ordered = winner ? [winner].concat(others) : seats;
+          var chips = ordered.map(function(s) {
+            var cls = 'score-chip' + (s.isWinner ? ' winner-chip' : (s.pts === 0 ? ' zero' : ''));
+            var prefix = s.isWinner ? '🏆 ' : '';
+            return '<span class="'+cls+'">'+prefix+esc(s.name)+' <strong>'+s.pts+'</strong></span>';
+          }).join('');
+          inner = '<div class="game-scores">'+chips+'</div>';
+        }
+        html += '<div class="game-entry"><div class="game-entry-left">'+
+          '<div class="game-table-num">Game '+(k+1)+'</div>'+
+          inner+
+        '</div><div class="game-entry-actions">'+
+          (editable ? '<button type="button" class="game-edit" onclick="editBatch(\''+esc(b.batchId)+'\','+k+')" title="Edit this game">Edit</button>' : '')+
+          '<button class="game-delete" onclick="deleteGame('+i+')" title="Delete this game">✕</button>'+
+        '</div></div>';
+      });
+      html += '</div>';
     });
     document.getElementById('games-list').innerHTML = html;
     var nonWall = gamesLog.filter(function(g){return !g.wallGame;}).length;
@@ -1334,6 +1499,49 @@
     gamesLog.splice(index,1);
     renderGamesLog();
     saveState();
+  }
+
+  // Reopen one Save as a sheet in progress: its games come back as columns,
+  // wall ticks and blanks included, and leave the log until saved again.
+  // Refused while that table number, or anyone seated in it, is at a table
+  // still in progress: the two sheets would disagree about the same night.
+  function editBatch(batchId, focusGameIdx) {
+    var entries = gamesLog.filter(function(g) { return g.batchId === batchId; });
+    if (!entries.length) return;
+    var tableNumber = entries[0].tableNumber;
+    var players = (entries[0].players || []).filter(function(p) { return !!p; });
+    if (getActiveTableNumbers().indexOf(tableNumber) !== -1) {
+      showToast('Table '+tableNumber+' is in progress — save or cancel it before editing these games', 'red');
+      return;
+    }
+    var busy = getActivePlayers();
+    var conflict = players.find(function(p) { return busy.indexOf(p) !== -1; });
+    if (conflict) {
+      showToast(playerName(conflict)+' is at a table in progress — save or cancel it before editing these games', 'red');
+      return;
+    }
+    entries.sort(function(a, b) { return (a.gameIdx || 0) - (b.gameIdx || 0); });
+    var games = entries.map(function(g) {
+      var raw = g.wallGame ? [] : (g.rawPoints || g.playerPoints || []);
+      var points = players.map(function(_, idx) {
+        var v = raw[idx];
+        return (v === null || v === undefined) ? null : v;
+      });
+      return { points: points, wallGame: !!g.wallGame };
+    });
+    gamesLog = gamesLog.filter(function(g) { return g.batchId !== batchId; });
+    var t = makeTable(tableNumber, players, games);
+    t.reopened = true;
+    t.batchId = batchId;
+    activeTables.push(t);
+    var gi = typeof focusGameIdx === 'number' && focusGameIdx < games.length ? focusGameIdx : 0;
+    pendingFocus = { t: String(t.id), g: String(gi), p: '0', select: true };
+    renderActiveTables();
+    renderGamesLog();
+    saveState();
+    var card = document.querySelector('[data-t="'+t.id+'"]');
+    if (card && card.closest('.scorecard-card')) card.closest('.scorecard-card').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    showToast('Table '+tableNumber+' reopened — '+games.length+' game'+(games.length===1?'':'s')+' back on the sheet', 'gold');
   }
 
   // ── SUBMIT FLOW — modal confirms event date, then sends ───────────
