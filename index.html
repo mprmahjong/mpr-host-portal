@@ -896,9 +896,39 @@
 
   // ── ACTIVE TABLES — SCORECARD GRID ───────────────────────────────
 
+  // The cards are rebuilt from scratch on every change, which used to throw
+  // the cursor out of the sheet (Add Game, the Wall tick). The element that
+  // had focus is found again by its data attributes after the rebuild, with
+  // the caret where it was; a change may instead ask for a particular cell
+  // (Add Game puts the cursor in the new column).
+  var pendingFocus = null;
+
+  function captureFocus() {
+    var el = document.activeElement;
+    if (!el || !el.dataset || el.dataset.t === undefined) return null;
+    var key = { t: el.dataset.t, g: el.dataset.g, p: el.dataset.p };
+    if (typeof el.selectionStart === 'number') { key.start = el.selectionStart; key.end = el.selectionEnd; }
+    return key;
+  }
+
+  function restoreFocus(key) {
+    if (!key) return;
+    var sel = '[data-t="'+key.t+'"][data-g="'+key.g+'"]' + (key.p !== undefined ? '[data-p="'+key.p+'"]' : ':not([data-p])');
+    var el = document.querySelector(sel);
+    if (!el || el.disabled) return;
+    el.focus();
+    if (key.start !== undefined && typeof el.setSelectionRange === 'function') {
+      try { el.setSelectionRange(key.start, key.end); } catch (e) {}
+    } else if (key.select && typeof el.select === 'function') {
+      el.select();
+    }
+  }
+
   function renderActiveTables() {
     var section = document.getElementById('active-tables-section');
     var list    = document.getElementById('active-tables-list');
+    var focusKey = pendingFocus || captureFocus();
+    pendingFocus = null;
     if (!activeTables.length) { section.style.display = 'none'; refreshTableDropdown(); return; }
     section.style.display = 'block';
     document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
@@ -950,7 +980,7 @@
       for (var gi = 0; gi < nGames; gi++) {
         var game = t.games[gi];
         wallCells += '<td>'+
-          '<div class="sc-wall-check'+(game.wallGame?' checked':'')+'" onclick="toggleWall('+t.id+','+gi+')">'+
+          '<div class="sc-wall-check'+(game.wallGame?' checked':'')+'" data-t="'+t.id+'" data-g="'+gi+'" onclick="toggleWall('+t.id+','+gi+')">'+
             (game.wallGame ? '✓' : '')+
           '</div>'+
         '</td>';
@@ -985,6 +1015,7 @@
 
     list.innerHTML = html;
     refreshTableDropdown();
+    restoreFocus(focusKey);
   }
 
   // The points typed for one seat in one game: null while the cell is blank.
@@ -1067,6 +1098,7 @@
     if (!t) return;
     t.games.push({ points: new Array(t.players.length).fill(null), wallGame: false });
     saveState();
+    pendingFocus = { t: String(t.id), g: String(t.games.length - 1), p: '0', select: true };
     renderActiveTables();
   }
 
