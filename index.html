@@ -391,7 +391,9 @@
     t.textContent = msg;
     t.className = 'show' + (variant ? ' ' + variant : '');
     clearTimeout(window._tt);
-    window._tt = setTimeout(function() { t.className = ''; }, 2800);
+    // A refusal names a game and says what to do about it; it stays long
+    // enough to be read.
+    window._tt = setTimeout(function() { t.className = ''; }, variant === 'red' ? 6000 : 2800);
   }
 
   function showPanel(name) {
@@ -688,23 +690,39 @@
   }
 
   // Migrate legacy active table format (pre-scorecard) to the new shape if found in storage.
+  // A seat's points are null while the cell is blank and an integer once a
+  // number is typed (zero and negatives included). Sessions saved before
+  // blanks were kept stored 0 for both; a 0 from one of those reads as blank,
+  // which is exactly how it was treated then.
   function migrateActiveTable(t) {
-    if (t.games && Array.isArray(t.games)) return t;
-    var players = (t.players || []).filter(function(p) { return !!p; });
-    return {
-      id: t.id || Date.now(),
-      tableNumber: t.tableNumber,
-      players: players,
-      games: makeEmptyGames(players.length, DEFAULT_GAMES_PER_TABLE)
-    };
+    if (!t.games || !Array.isArray(t.games)) {
+      var players = (t.players || []).filter(function(p) { return !!p; });
+      return {
+        id: t.id || Date.now(),
+        tableNumber: t.tableNumber,
+        players: players,
+        games: makeEmptyGames(players.length, DEFAULT_GAMES_PER_TABLE)
+      };
+    }
+    if (!t.keepsBlanks) {
+      t.games.forEach(function(g) {
+        g.points = (g.points || []).map(function(v) { return (v === null || v === undefined || v === 0) ? null : v; });
+      });
+      t.keepsBlanks = true;
+    }
+    return t;
   }
 
   function makeEmptyGames(playerCount, count) {
     var arr = [];
     for (var i = 0; i < count; i++) {
-      arr.push({ points: new Array(playerCount).fill(0), wallGame: false });
+      arr.push({ points: new Array(playerCount).fill(null), wallGame: false });
     }
     return arr;
+  }
+
+  function makeTable(tableNumber, players, games) {
+    return { id: Date.now(), tableNumber: tableNumber, players: players, games: games, keepsBlanks: true };
   }
 
   document.getElementById('code-input').addEventListener('keydown', function(e) {
@@ -867,12 +885,7 @@
     var conflict = players.find(function(p) { return activePlayers.indexOf(p) !== -1; });
     if (conflict) { showToast(playerName(conflict) + ' is already at an active table'); return; }
 
-    activeTables.push({
-      id: Date.now(),
-      tableNumber: tableNum,
-      players: players,
-      games: makeEmptyGames(players.length, DEFAULT_GAMES_PER_TABLE)
-    });
+    activeTables.push(makeTable(tableNum, players, makeEmptyGames(players.length, DEFAULT_GAMES_PER_TABLE)));
     renderActiveTables();
     saveState();
     document.getElementById('st-table').value = '';
@@ -903,20 +916,25 @@
       var playerRows = '';
       t.players.forEach(function(playerId, pIdx) {
         var displayName = playerName(playerId);
-        var rowTotal = computePlayerTotal(t, pIdx);
         var cells = '';
         for (var gi = 0; gi < nGames; gi++) {
           var game = t.games[gi];
-          var val  = game.points[pIdx] || 0;
-          var isWinner = (!game.wallGame && val > 0);
+          var val  = pointsAt(game, pIdx);
+          var isWinner = (!game.wallGame && val !== null && val > 0);
+          // A text input, not a number input: a number input hides a minus
+          // sign behind its own validity rules and changes on a scroll wheel.
+          // Negatives are legitimate (ruled 2026-09-17) and are typed with a
+          // minus key, so the phone's numeric keypad is kept as it was.
           cells += '<td>' +
-            '<input type="number" class="sc-game-input'+(isWinner?' winner-highlight':'')+'" '+
-              'value="'+(val>0?val:'')+'" '+
+            '<input type="text" class="sc-game-input'+(isWinner?' winner-highlight':'')+'" '+
+              'value="'+(val === null ? '' : val)+'" '+
               'placeholder="—" '+
-              'min="0" '+
-              'inputmode="numeric" '+
+              'inputmode="numeric" autocomplete="off" '+
+              'data-t="'+t.id+'" data-g="'+gi+'" data-p="'+pIdx+'" '+
+              'aria-label="'+esc(displayName)+', game '+(gi+1)+'" '+
               (game.wallGame ? 'disabled ' : '')+
-              'oninput="onPointInput('+t.id+','+gi+','+pIdx+',this)"'+
+              'oninput="onPointInput('+t.id+','+gi+','+pIdx+',this)" '+
+              'onblur="onPointBlur('+t.id+','+gi+','+pIdx+',this)"'+
             '></td>';
         }
         playerRows +=
@@ -924,7 +942,7 @@
             '<td class="col-num"><span class="sc-row-num">'+(pIdx+1)+'</span></td>'+
             '<td class="col-name" title="'+esc(displayName)+'">'+esc(displayName)+'</td>'+
             cells+
-            '<td class="sc-total-cell">'+(rowTotal||'—')+'</td>'+
+            '<td class="sc-total-cell">'+totalLabel(t, pIdx)+'</td>'+
           '</tr>';
       });
 
@@ -961,7 +979,7 @@
           '<button class="add-game-btn" onclick="addGame('+t.id+')">+ Add Game</button>'+
           '<button class="save-table-btn" onclick="saveTable('+t.id+')">Save Table →</button>'+
         '</div>'+
-        '<div class="scorecard-hint">Enter each player\'s points per game. Leave blank for players who didn\'t score. Check the "Wall?" box for any game that ended in a wall.</div>'+
+        '<div class="scorecard-hint">Enter each player\'s points per game; a minus sign marks a penalty. Leave blank for players who didn\'t score. Tick "Wall?" for any game that ended in a wall.</div>'+
       '</div>';
     });
 
@@ -969,32 +987,67 @@
     refreshTableDropdown();
   }
 
+  // The points typed for one seat in one game: null while the cell is blank.
+  function pointsAt(game, pIdx) {
+    var v = game.points[pIdx];
+    return (v === null || v === undefined || v === '') ? null : v;
+  }
+
+  // A player's total over the decisive games with a number in any seat:
+  // blanks count as zero there, as the hint says. Null when nothing has been
+  // typed in any of them yet.
   function computePlayerTotal(t, pIdx) {
     var total = 0;
+    var any = false;
     t.games.forEach(function(g) {
       if (g.wallGame) return;
-      total += parseInt(g.points[pIdx]) || 0;
+      if (!g.points.some(function(v, i) { return pointsAt(g, i) !== null; })) return;
+      any = true;
+      total += pointsAt(g, pIdx) || 0;
     });
-    return total;
+    return any ? total : null;
+  }
+
+  function totalLabel(t, pIdx) {
+    var total = computePlayerTotal(t, pIdx);
+    return total === null ? '—' : String(total);
+  }
+
+  // What a cell's text means: an integer, with or without a minus, or blank.
+  // Anything else (a lone minus mid-typing, a stray letter) is blank until it
+  // becomes a number; the text itself is left alone while typing.
+  function parsePoints(text) {
+    var raw = String(text || '').trim();
+    return /^-?\d+$/.test(raw) ? parseInt(raw, 10) : null;
   }
 
   function onPointInput(tableId, gameIdx, pIdx, inputEl) {
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
-    var val = parseInt(inputEl.value);
-    if (isNaN(val) || val < 0) val = 0;
+    var val = parsePoints(inputEl.value);
     t.games[gameIdx].points[pIdx] = val;
     saveState();
-    if (val > 0) inputEl.classList.add('winner-highlight');
+    if (val !== null && val > 0) inputEl.classList.add('winner-highlight');
     else inputEl.classList.remove('winner-highlight');
     var tr = inputEl.closest('tr');
     if (tr) {
       var totalTd = tr.querySelector('.sc-total-cell');
-      if (totalTd) {
-        var rowTotal = computePlayerTotal(t, pIdx);
-        totalTd.textContent = rowTotal || '—';
-      }
+      if (totalTd) totalTd.textContent = totalLabel(t, pIdx);
     }
+  }
+
+  // Leaving a cell tidies its text to the number it holds ("-0" and "007"
+  // become 0 and 7; a stray letter becomes blank).
+  function onPointBlur(tableId, gameIdx, pIdx, inputEl) {
+    var t = activeTables.find(function(x){return x.id===tableId;});
+    if (!t) return;
+    var val = pointsAt(t.games[gameIdx], pIdx);
+    inputEl.value = val === null ? '' : String(val);
+  }
+
+  function focusCell(tableId, gameIdx, pIdx) {
+    var el = document.querySelector('.sc-game-input[data-t="'+tableId+'"][data-g="'+gameIdx+'"][data-p="'+pIdx+'"]');
+    if (el && !el.disabled) { el.focus(); el.select(); }
   }
 
   function toggleWall(tableId, gameIdx) {
@@ -1003,7 +1056,7 @@
     var g = t.games[gameIdx];
     g.wallGame = !g.wallGame;
     if (g.wallGame) {
-      g.points = g.points.map(function(){return 0;});
+      g.points = g.points.map(function(){return null;});
     }
     saveState();
     renderActiveTables();
@@ -1012,7 +1065,7 @@
   function addGame(tableId) {
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
-    t.games.push({ points: new Array(t.players.length).fill(0), wallGame: false });
+    t.games.push({ points: new Array(t.players.length).fill(null), wallGame: false });
     saveState();
     renderActiveTables();
   }
@@ -1027,29 +1080,52 @@
     var t = activeTables.find(function(x){return x.id===tableId;});
     if (!t) return;
 
+    // Every game is checked before any is committed: a refusal names the
+    // game and leaves the whole sheet as it was. The rules are the platform's
+    // own (lib/algorithm/game-rules): a decisive game's points must add up
+    // above zero, and a game with a zero in every seat that was filled in is
+    // a wall game missing its tick. The server converts that silently at its
+    // door; this sheet is a form, so it asks instead, by pointing at the tick.
+    // A column nobody typed in is simply not a game yet and is skipped.
     var toCommit = [];
+    var refusal = null;
 
     t.games.forEach(function(g, gi) {
+      if (refusal) return;
       var seatCount = t.players.length;
       if (g.wallGame) {
-        toCommit.push({ wallGame: true, points: t.players.map(function(){ return 0; }), winnerIdx: -1, gameIdx: gi });
+        toCommit.push({ wallGame: true, points: t.players.map(function(){ return 0; }), rawPoints: t.players.map(function(){ return null; }), winnerIdx: -1, gameIdx: gi });
         return;
       }
-      var paddedPoints = t.players.map(function(){ return 0; });
-      var anyScore = false;
+      var typed = [];
+      for (var pIdx = 0; pIdx < seatCount; pIdx++) {
+        var v = pointsAt(g, pIdx);
+        if (v !== null) typed.push(v);
+      }
+      if (!typed.length) return;
+      if (typed.every(function(v) { return v === 0; })) {
+        refusal = { gameIdx: gi, message: 'Game '+(gi+1)+' on Table '+t.tableNumber+' has 0 for every seat filled in. Tick Wall? for it, or clear the column.' };
+        return;
+      }
+      var paddedPoints = t.players.map(function(_, pIdx){ return pointsAt(g, pIdx) || 0; });
+      var sum = paddedPoints.reduce(function(a, b) { return a + b; }, 0);
+      if (sum <= 0) {
+        refusal = { gameIdx: gi, message: 'Game '+(gi+1)+' on Table '+t.tableNumber+': decisive games must add up above zero.' };
+        return;
+      }
       var winnerIdx = -1;
       var winnerPts = 0;
-      g.points.forEach(function(pts, pIdx) {
-        var v = parseInt(pts) || 0;
-        if (pIdx < seatCount) paddedPoints[pIdx] = v;
-        if (v > 0) {
-          anyScore = true;
-          if (v > winnerPts) { winnerPts = v; winnerIdx = pIdx; }
-        }
+      paddedPoints.forEach(function(v, pIdx) {
+        if (v > winnerPts) { winnerPts = v; winnerIdx = pIdx; }
       });
-      if (!anyScore) return;
-      toCommit.push({ wallGame: false, points: paddedPoints, winnerIdx: winnerIdx, gameIdx: gi });
+      toCommit.push({ wallGame: false, points: paddedPoints, rawPoints: t.players.map(function(_, pIdx){ return pointsAt(g, pIdx); }), winnerIdx: winnerIdx, gameIdx: gi });
     });
+
+    if (refusal) {
+      showToast(refusal.message, 'red');
+      focusCell(t.id, refusal.gameIdx, 0);
+      return;
+    }
 
     if (toCommit.length === 0) {
       showToast('No games entered — enter scores or cancel the table', 'red');
@@ -1069,6 +1145,7 @@
         tableNumber: t.tableNumber,
         players: seatPlayers,
         playerPoints: c.points,
+        rawPoints: c.rawPoints,
         winner: winner,
         points: winnerPoints,
         wallGame: c.wallGame
