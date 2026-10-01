@@ -593,14 +593,18 @@
   }
 
   function openSD(slot, seed) {
-    closeAllSD();
     var dd = document.getElementById('sd-dd-'+slot);
     var search = document.getElementById('sd-search-'+slot);
     if (!dd) return;
+    // Typed letters go straight into the search: the search box takes focus
+    // at once, so a second letter typed quickly lands in it rather than
+    // reopening the picker with the first letter lost.
+    var alreadyOpen = dd.classList.contains('open');
+    if (!alreadyOpen) closeAllSD();
     dd.classList.add('open');
-    search.value = seed || '';
+    search.value = alreadyOpen ? search.value + (seed || '') : (seed || '');
     renderSDList(slot, search.value);
-    setTimeout(function() { search.focus(); }, 50);
+    search.focus();
   }
 
   function highlightedSDOption(slot) {
@@ -1018,7 +1022,7 @@
     var list    = document.getElementById('active-tables-list');
     var focusKey = pendingFocus || captureFocus();
     pendingFocus = null;
-    if (!activeTables.length) { section.style.display = 'none'; refreshTableDropdown(); return; }
+    if (!activeTables.length) { section.style.display = 'none'; list.innerHTML = ''; refreshTableDropdown(); return; }
     section.style.display = 'block';
     document.getElementById('active-tables-label').textContent = 'Active Tables ('+activeTables.length+')';
 
